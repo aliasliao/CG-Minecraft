@@ -1,4 +1,5 @@
 #include "stdafx.h"
+#include <cstdlib>
 #include "Store.h"
 
 Cube::Cube(glm::vec3 position, unsigned int type)
@@ -25,7 +26,7 @@ Store::Store()
 	GLfloat* vertices = this->getVertices();
 	glGenBuffers(1, &this->vbo);
 	glBindBuffer(GL_ARRAY_BUFFER, this->vbo);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);  // to be formatted
 }
 
 bool Store::addObject(Cube cube)
@@ -95,5 +96,36 @@ bool Store::removeObject(glm::vec3 position)
 
 GLfloat * Store::getVertices()
 {
+	int faceCnt = 0;
+	
+	for (auto &c : this->cubes) {
+		faceCnt += c.faces.size();
+	}
+
+	int vertCnt = faceCnt * 2 * 3;
+	GLfloat *vertices = (GLfloat *)malloc(vertCnt * 9 * sizeof(GLfloat));
+
+	for (auto &c : this->cubes) {
+		GLfloat
+			px = c.position.x,
+			py = c.position.y,
+			pz = c.position.z,
+			cr = c.color.r,
+			cg = c.color.g,
+			cb = c.color.b,
+			t = c.type;
+
+		GLfloat allVert[6][6 * 9] = {
+			{
+				px+1, py  , pz  , cr, cg, cb, t, 0, 0,
+				px+1, py+1, pz  , cr, cg, cb, t, 1, 0,
+				px+1, py+1, pz+1, cr, cg, cb, t, 1, 1,
+				px+1, py+1, pz+1, cr, cg, cb, t, 1, 1,
+				px+1, py  , pz+1, cr, cg, cb, t, 0, 1,
+				px+1, py  , pz  , cr, cg, cb, t, 0, 0,
+			},
+		};
+	}
+
 	return nullptr;
 }

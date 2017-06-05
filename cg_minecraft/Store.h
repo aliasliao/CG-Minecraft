@@ -12,7 +12,7 @@
 struct Cube {
 	glm::vec3 position;  // integer
 	glm::vec3 color;
-	unsigned int type;
+	unsigned int type;  // can be treated as sample2d texture directly in glsl
 	std::set<unsigned int> faces;
 
 	Cube(glm::vec3 position, unsigned int type);
@@ -29,7 +29,7 @@ class Store {
 public:
 	Store();
 	Store(std::string fileName);
-	bool addObject(Cube cube);
-	bool removeObject(glm::vec3 position);
+	bool addCube(Cube cube);
+	bool removeCube(glm::vec3 position);
 	bool saveFile();
 };

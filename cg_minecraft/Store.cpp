@@ -29,7 +29,7 @@ Store::Store()
 	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);  // to be formatted
 }
 
-bool Store::addObject(Cube cube)
+bool Store::addCube(Cube cube)
 {
 	if (cube.position.z < 0) {
 		return false;
@@ -81,7 +81,7 @@ bool Store::addObject(Cube cube)
 	return true;
 }
 
-bool Store::removeObject(glm::vec3 position)
+bool Store::removeCube(glm::vec3 position)
 {
 	for (auto it = this->cubes.begin(); it != this->cubes.end(); it++) {
 		if ((*it).position == position) {
@@ -124,6 +124,46 @@ GLfloat * Store::getVertices()
 				px+1, py  , pz+1, cr, cg, cb, t, 0, 1,
 				px+1, py  , pz  , cr, cg, cb, t, 0, 0,
 			},
+			{
+				px  , py  , pz  , cr, cg, cb, t, 0, 0,
+				px  , py+1, pz  , cr, cg, cb, t, 1, 0,
+				px  , py+1, pz+1, cr, cg, cb, t, 1, 1,
+				px  , py+1, pz+1, cr, cg, cb, t, 1, 1,
+				px  , py  , pz+1, cr, cg, cb, t, 0, 1,
+				px  , py  , pz  , cr, cg, cb, t, 0, 0,
+			},
+			{
+				px  , py  , pz  , cr, cg, cb, t, 0, 0,
+				px+1, py  , pz  , cr, cg, cb, t, 1, 0,
+				px+1, py  , pz+1, cr, cg, cb, t, 1, 1,
+				px+1, py  , pz+1, cr, cg, cb, t, 1, 1,
+				px  , py  , pz+1, cr, cg, cb, t, 0, 1,
+				px  , py  , pz  , cr, cg, cb, t, 0, 0,
+			},
+			{
+				px  , py+1, pz  , cr, cg, cb, t, 0, 0,
+				px+1, py+1, pz  , cr, cg, cb, t, 1, 0,
+				px+1, py+1, pz+1, cr, cg, cb, t, 1, 1,
+				px+1, py+1, pz+1, cr, cg, cb, t, 1, 1,
+				px  , py+1, pz+1, cr, cg, cb, t, 0, 1,
+				px  , py+1, pz  , cr, cg, cb, t, 0, 0,
+			},
+			{
+				px+1, py  , pz+1, cr, cg, cb, t, 0, 0,
+				px+1, py+1, pz+1, cr, cg, cb, t, 1, 0,
+				px  , py+1, pz+1, cr, cg, cb, t, 1, 1,
+				px  , py+1, pz+1, cr, cg, cb, t, 1, 1,
+				px  , py  , pz+1, cr, cg, cb, t, 0, 1,
+				px+1, py  , pz+1, cr, cg, cb, t, 0, 0,
+			},
+			{
+				px+1, py  , pz  , cr, cg, cb, t, 0, 0,
+				px+1, py+1, pz  , cr, cg, cb, t, 1, 0,
+				px  , py+1, pz  , cr, cg, cb, t, 1, 1,
+				px  , py+1, pz  , cr, cg, cb, t, 1, 1,
+				px  , py  , pz  , cr, cg, cb, t, 0, 1,
+				px+1, py  , pz  , cr, cg, cb, t, 0, 0,
+			}
 		};
 	}
 

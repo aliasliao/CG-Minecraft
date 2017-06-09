@@ -3,13 +3,22 @@
 #include "Store.h"
 #include "Texture.h"
 
-Store::Store(bool isGround)
+Store::Store(bool needGround)
 {
-	this->isGround = isGround;
-	this->initBuffers();
-	if (isGround) {
+	if (needGround) {
 		this->addGround();
 	}
+	this->hasGround = needGround;
+	this->initBuffers();
+}
+
+Store::Store(const std::string fileName, bool hasGround)
+{
+	this->hasGround = hasGround;
+	if (!hasGround) {  // a scene always need a ground
+		this->addGround();
+	}
+	this->initBuffers();
 }
 
 // only for none ground
@@ -78,13 +87,15 @@ bool Store::addCube(
 		this->elements.push_back(glm::uvec3(nextIndex+3, nextIndex+4, nextIndex+5));
 	}
 
+	this->upload();
+
 	return true;
 }
 
 // only called for NONE ground
 bool Store::removeCube(const glm::ivec3 & position)
 {
-	const int groundBias = this->isGround ? 1 : 0;
+	const int groundBias = this->hasGround ? 1 : 0;
 	const int cubeIndex = this->getCubeIndex(position);
 
 	if (cubeIndex <= 0) {
@@ -102,6 +113,8 @@ bool Store::removeCube(const glm::ivec3 & position)
 	endBias = 2 * groundBias + cubeIndex * 6*2;
 	this->elements.erase(this->elements.begin() + beginBias, this->elements.begin() + endBias);
 
+	this->upload();
+
 	return true;
 }
 
@@ -110,7 +123,10 @@ void Store::draw()
 {
 	glBindVertexArray(this->vao);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, this->elementEbo);
-	glDrawElements()
+	glDrawElements(GL_TRIANGLES, this->elements.size(), GL_UNSIGNED_INT, 0);
+
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+	glBindVertexArray(0);
 }
 
 
@@ -125,7 +141,7 @@ void Store::draw()
  */
 int Store::getCubeIndex(const glm::ivec3 & position)
 {
-	const int groundBias = this->isGround ? 1 : 0;
+	const int groundBias = this->hasGround ? 1 : 0;
 	const int interval = 6 * 2 * 3;
 
 	if (position.y < 0) {  // under ground
@@ -170,6 +186,8 @@ void Store::addGround()
 		// !!!must be called first, ground should be the head of these vectors
 		this->elements.push_back(glm::uvec3(0, 1, 2));
 		this->elements.push_back(glm::uvec3(3, 4, 5));
+
+		this->upload();
 }
 
 /*

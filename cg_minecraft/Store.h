@@ -7,7 +7,7 @@
 #include "define.h"
 
 class Store {
-	bool isGround;
+	bool hasGround;
 
 	std::vector<glm::ivec3> vertices;
 	std::vector<glm::ivec3> normals;
@@ -22,8 +22,8 @@ class Store {
 	int getCubeIndex(const glm::ivec3 & position);  // 0 for ground
 	
 public:
-	Store(bool isGround = false);
-	Store(const std::string fileName);  // load from file
+	Store(bool needGround=false);  // whether the store need a ground
+	Store(const std::string fileName, bool hasGround=true);  // load from file, whether the obj has a ground
 	bool saveFile(const std::string &fileName);  // save to file
 	bool addCube(const glm::ivec3 &position, const CubeType type);
 	bool removeCube(const glm::ivec3 &position);

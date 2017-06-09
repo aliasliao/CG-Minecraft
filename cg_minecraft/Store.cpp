@@ -1,171 +1,118 @@
 #include "stdafx.h"
 #include <cstdlib>
 #include "Store.h"
+#include "Texture.h"
 
-Cube::Cube(glm::vec3 position, unsigned int type)
+bool Store::addCube(const glm::ivec3 &position,
+	const CubeType type,
+	const Direction zFacedirection)
 {
-	this->position = glm::vec3(position);
-	this->color = glm::vec3(1.0, 1.0, 1.0);
-	this->type = 0;
-	unsigned int faces[] = { 0, 1, 2, 3, 4, 5 };  // f, b, l, r, t, b
-	this->faces = std::set<unsigned int>(faces, faces+6);
-}
-Cube::Cube(glm::vec3 position, glm::vec3 color, unsigned int type)
-{
-	new (this) Cube(position, type);
-	this->color = glm::vec3(color);
-}
-
-Store::Store()
-{
-	this->cubes = std::vector<Cube>();
-
-	glGenVertexArrays(1, &this->vao);
-	glBindVertexArray(this->vao);
-
-	GLfloat* vertices = this->getVertices();
-	glGenBuffers(1, &this->vbo);
-	glBindBuffer(GL_ARRAY_BUFFER, this->vbo);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);  // to be formatted
-}
-
-bool Store::addCube(Cube cube)
-{
-	if (cube.position.z < 0) {
+	if (this->isOccupied(position) || position.y<0) {
+		std::cout << "position has been occupied or underground" << std::endl;
 		return false;
 	}
 
-	for (auto &c : this->cubes) {
-		if (c.position == cube.position) {
-			return false;
-		}
+	if (type == GROUND) {
+		this->vertices.push_back(glm::ivec3(-100, 0, -100));
+		this->vertices.push_back(glm::ivec3(-100, 0, 100));
+		this->vertices.push_back(glm::ivec3(100, 0, 100));
+		this->vertices.push_back(glm::ivec3(100, 0, -100));
+		this->normals.push_back(glm::ivec3(0, 1, 0));
+		this->normals.push_back(glm::ivec3(0, 1, 0));
+		this->normals.push_back(glm::ivec3(0, 1, 0));
+		this->normals.push_back(glm::ivec3(0, 1, 0));
+		this->textures.push_back(glm::ivec3(0, 1, 0));
+		this->textures.push_back(glm::ivec3(1, 1, 0));
+		this->textures.push_back(glm::ivec3(1, 0, 0));
+		this->textures.push_back(glm::ivec3(0, 0, 0));
+		this->elements.push_back(glm::ivec4(0, 1, 2, 3));  // !!!must be called first
+
+		return true;
 	}
 
-	for (auto &c : this->cubes) {
-		glm::vec3 distance = c.position - cube.position;
-		unsigned int cIndex=6, cubeIndex;
+	// vertices
+	int orv[6 * 4 * 3] = {  // every point coordinate
+		0,0,0, 1,0,0, 1,0,1, 0,0,1,
+		0,1,0, 1,1,0, 1,1,1, 0,1,1,
+		0,0,0, 0,1,0, 0,1,1, 0,0,1,
+		1,0,0, 1,1,0, 1,1,1, 1,0,1,
+		0,0,1, 0,1,1, 1,1,1, 1,0,1,
+		0,0,0, 0,1,0, 1,1,0, 1,0,0
+	};
 
-		if (distance == glm::vec3(1, 0, 0)) {
-			cIndex = 1;
-			cubeIndex = 0;
-		}
-		else if (distance == glm::vec3(-1, 0, 0)) {
-			cIndex = 0;
-			cubeIndex = 1;
-		}
-		else if (distance == glm::vec3(0, 1, 0)) {
-			cIndex = 2;
-			cubeIndex = 3;
-		}
-		else if (distance == glm::vec3(0, -1, 0)) {
-			cIndex = 3;
-			cubeIndex = 2;
-		}
-		else if (distance == glm::vec3(0, 0, 1)) {
-			cIndex = 5;
-			cubeIndex = 4;
-		}
-		else if (distance == glm::vec3(0, 0, -1)) {
-			cIndex = 4;
-			cubeIndex = 5;
-		}
+	// normals
+	int orn[6 * 3] = {  // 6 faces normal
+		 0, -1,  0,
+		 0,  1,  0,
+		-1,  0,  0,
+		 1,  0,  0,
+		 0,  0,  1,
+		 0,  0, -1
+	};
 
-		if (cIndex != 6) {
-			c.faces.erase(c.faces.find(cIndex));
-			cube.faces.erase(cube.faces.find(cubeIndex));
-		}
+	// texture coordinate
+	int ort[4 * 2] = {  // every face texture coordinate
+		0,0, 0,1, 1,1, 1,0
+	};
+
+	// texture index
+	int ori[6], tmp[6];  // 6 faces texture index
+	ori[0]= tmp[0] = TEX.tex[type][BOTTOM];
+	ori[1]= tmp[1] = TEX.tex[type][UP];
+	ori[2]= tmp[2] = TEX.tex[type][LEFT];
+	ori[3]= tmp[3] = TEX.tex[type][RIGHT];
+	ori[4]= tmp[4] = TEX.tex[type][FRONT];
+	ori[5]= tmp[5] = TEX.tex[type][BACK];
+	switch (zFacedirection)
+	{
+		case FRONT:
+			break;
+		case BACK:
+			ori[2] = tmp[3]; ori[3] = tmp[2]; ori[4] = tmp[5]; ori[5] = tmp[4];
+			break;
+		case LEFT:
+			ori[2] = tmp[4]; ori[3] = tmp[5]; ori[4] = tmp[3]; ori[5] = tmp[2];
+			break;
+		case RIGHT:
+			ori[2] = tmp[5]; ori[3] = tmp[4]; ori[4] = tmp[2]; ori[5] = tmp[3];
+			break;
+		default:
+			std::cout << "invalid zFaceDirection" << std::endl; return false;
+			break;
 	}
 
-	this->cubes.push_back(cube);
+	// elements
+
+	// 4*6, 4*6, 4*6, 1*6
+	for (int i = 0; i < 6; i++) {  // bottom, up, left, right, front, back
+		int nextIndex = this->vertices.size();  // 4 index represent a face
+		for (int j = 0; j < 4; j++) {
+			int vi = 4 * 3 * i + 3 * j;
+			this->vertices.push_back(glm::ivec3(
+				position.x + orv[vi],
+				position.y + orv[vi+1],
+				position.z + orv[vi+2]));
+
+			int ni = 3 * j;
+			this->normals.push_back(glm::ivec3(orn[ni], orn[ni+1], orn[ni+2]));
+
+			int ti = 2 * j;
+			this->textures.push_back(glm::ivec3(ort[ti], ort[ti+1], ori[i]));
+		}
+		this->elements.push_back(glm::ivec4(nextIndex, nextIndex + 1, nextIndex + 2, nextIndex + 3));
+	}
 
 	return true;
 }
 
-bool Store::removeCube(glm::vec3 position)
+bool Store::removeCube(const glm::ivec3 & position)
 {
-	for (auto it = this->cubes.begin(); it != this->cubes.end(); it++) {
-		if ((*it).position == position) {
-			this->cubes.erase(it);
+	const int cubeIndex = this->getCubeIndex(position);
 
-			return true;
-		}
+	if (cubeIndex <= 0) {
+		std::cout << "cube not exits or try to remove ground" << std::endl;
+		return false;
 	}
 
-	return false;
-}
-
-GLfloat * Store::getVertices()
-{
-	int faceCnt = 0;
-	
-	for (auto &c : this->cubes) {
-		faceCnt += c.faces.size();
-	}
-
-	int vertCnt = faceCnt * 2 * 3;
-	GLfloat *vertices = (GLfloat *)malloc(vertCnt * 9 * sizeof(GLfloat));
-
-	for (auto &c : this->cubes) {
-		GLfloat
-			px = c.position.x,
-			py = c.position.y,
-			pz = c.position.z,
-			cr = c.color.r,
-			cg = c.color.g,
-			cb = c.color.b,
-			t = c.type;
-
-		GLfloat allVert[6][6 * 9] = {
-			{
-				px+1, py  , pz  , cr, cg, cb, t, 0, 0,
-				px+1, py+1, pz  , cr, cg, cb, t, 1, 0,
-				px+1, py+1, pz+1, cr, cg, cb, t, 1, 1,
-				px+1, py+1, pz+1, cr, cg, cb, t, 1, 1,
-				px+1, py  , pz+1, cr, cg, cb, t, 0, 1,
-				px+1, py  , pz  , cr, cg, cb, t, 0, 0,
-			},
-			{
-				px  , py  , pz  , cr, cg, cb, t, 0, 0,
-				px  , py+1, pz  , cr, cg, cb, t, 1, 0,
-				px  , py+1, pz+1, cr, cg, cb, t, 1, 1,
-				px  , py+1, pz+1, cr, cg, cb, t, 1, 1,
-				px  , py  , pz+1, cr, cg, cb, t, 0, 1,
-				px  , py  , pz  , cr, cg, cb, t, 0, 0,
-			},
-			{
-				px  , py  , pz  , cr, cg, cb, t, 0, 0,
-				px+1, py  , pz  , cr, cg, cb, t, 1, 0,
-				px+1, py  , pz+1, cr, cg, cb, t, 1, 1,
-				px+1, py  , pz+1, cr, cg, cb, t, 1, 1,
-				px  , py  , pz+1, cr, cg, cb, t, 0, 1,
-				px  , py  , pz  , cr, cg, cb, t, 0, 0,
-			},
-			{
-				px  , py+1, pz  , cr, cg, cb, t, 0, 0,
-				px+1, py+1, pz  , cr, cg, cb, t, 1, 0,
-				px+1, py+1, pz+1, cr, cg, cb, t, 1, 1,
-				px+1, py+1, pz+1, cr, cg, cb, t, 1, 1,
-				px  , py+1, pz+1, cr, cg, cb, t, 0, 1,
-				px  , py+1, pz  , cr, cg, cb, t, 0, 0,
-			},
-			{
-				px+1, py  , pz+1, cr, cg, cb, t, 0, 0,
-				px+1, py+1, pz+1, cr, cg, cb, t, 1, 0,
-				px  , py+1, pz+1, cr, cg, cb, t, 1, 1,
-				px  , py+1, pz+1, cr, cg, cb, t, 1, 1,
-				px  , py  , pz+1, cr, cg, cb, t, 0, 1,
-				px+1, py  , pz+1, cr, cg, cb, t, 0, 0,
-			},
-			{
-				px+1, py  , pz  , cr, cg, cb, t, 0, 0,
-				px+1, py+1, pz  , cr, cg, cb, t, 1, 0,
-				px  , py+1, pz  , cr, cg, cb, t, 1, 1,
-				px  , py+1, pz  , cr, cg, cb, t, 1, 1,
-				px  , py  , pz  , cr, cg, cb, t, 0, 1,
-				px+1, py  , pz  , cr, cg, cb, t, 0, 0,
-			}
-		};
-	}
-
-	return nullptr;
+	return true;
 }

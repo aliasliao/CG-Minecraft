@@ -19,14 +19,13 @@ class Store {
 	void initBuffers();  // vertex attribute point
 	void addGround();
 	void upload();  // upload buffer to gpu
-	bool isOccupied(const glm::ivec3 &position);
 	int getCubeIndex(const glm::ivec3 & position);  // 0 for ground
 	
 public:
 	Store(bool isGround = false);
 	Store(const std::string fileName);  // load from file
 	bool saveFile(const std::string &fileName);  // save to file
-	bool addCube(const glm::ivec3 &position, const CubeType type, const Direction zFaceDirection=FRONT);
+	bool addCube(const glm::ivec3 &position, const CubeType type);
 	bool removeCube(const glm::ivec3 &position);
 	void draw();
 };

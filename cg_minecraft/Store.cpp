@@ -15,23 +15,25 @@ Store::Store(bool isGround)
 // only for none ground
 bool Store::addCube(
 	const glm::ivec3 &position,
-	const CubeType type,  // type is CubeType other than GROUND
-	const Direction zFacedirection
+	const CubeType type  // type is CubeType other than GROUND
 )
 {
-	if (this->isOccupied(position) || position.y<0) {
+	if (this->getCubeIndex(position) <= 0) {
 		std::cout << "position has been occupied or underground" << std::endl;
 		return false;
 	}
 
+	// 6*2*3*3
 	// vertices
-	int orv[6 * 4 * 3] = {  // every point coordinate
-		0,0,0, 1,0,0, 1,0,1, 0,0,1,
-		0,1,0, 1,1,0, 1,1,1, 0,1,1,
-		0,0,0, 0,1,0, 0,1,1, 0,0,1,
-		1,0,0, 1,1,0, 1,1,1, 1,0,1,
-		0,0,1, 0,1,1, 1,1,1, 1,0,1,
-		0,0,0, 0,1,0, 1,1,0, 1,0,0
+	int orv[6 * 2 * 3 * 3] = {  // every point coordinate
+		0,0,0, 0,0,1, 1,0,1,  1,0,1, 1,0,0, 0,0,0,
+		0,1,0, 0,1,1, 1,1,1,  1,1,1, 1,1,0, 0,1,0,
+
+		0,0,0, 0,0,1, 0,1,1,  0,1,1, 0,1,0, 0,0,0,
+		1,0,0, 1,0,1, 1,1,1,  1,1,1, 1,1,0, 1,0,0,
+
+		0,0,1, 1,0,1, 1,1,1,  1,1,1, 0,1,1, 0,0,1,
+		1,0,0, 0,0,0, 0,1,0,  0,1,0, 1,1,0, 1,0,0
 	};
 
 	// normals
@@ -45,53 +47,35 @@ bool Store::addCube(
 	};
 
 	// texture coordinate
-	int ort[4 * 2] = {  // every face texture coordinate
-		0,0, 0,1, 1,1, 1,0
+	int ort[6 * 2] = {  // every face texture coordinate
+		0,0, 1,0, 1,1,  1,1, 0,1, 0,0
 	};
 
 	// texture index
-	int ori[6], tmp[6];  // 6 faces texture index
-	ori[0]= tmp[0] = TEX.tex[type][BOTTOM];
-	ori[1]= tmp[1] = TEX.tex[type][UP];
-	ori[2]= tmp[2] = TEX.tex[type][LEFT];
-	ori[3]= tmp[3] = TEX.tex[type][RIGHT];
-	ori[4]= tmp[4] = TEX.tex[type][FRONT];
-	ori[5]= tmp[5] = TEX.tex[type][BACK];
-	switch (zFacedirection)
-	{
-		case FRONT:
-			break;
-		case BACK:
-			ori[2] = tmp[3]; ori[3] = tmp[2]; ori[4] = tmp[5]; ori[5] = tmp[4];
-			break;
-		case LEFT:
-			ori[2] = tmp[4]; ori[3] = tmp[5]; ori[4] = tmp[3]; ori[5] = tmp[2];
-			break;
-		case RIGHT:
-			ori[2] = tmp[5]; ori[3] = tmp[4]; ori[4] = tmp[2]; ori[5] = tmp[3];
-			break;
-		default:
-			std::cout << "invalid zFaceDirection" << std::endl; return false;
-			break;
-	}
+	int ori[6];  // 6 faces texture index
+	ori[0]= TEX.tex[type][BOTTOM];
+	ori[1]= TEX.tex[type][UP];
+	ori[2]= TEX.tex[type][LEFT];
+	ori[3]= TEX.tex[type][RIGHT];
+	ori[4]= TEX.tex[type][FRONT];
+	ori[5]= TEX.tex[type][BACK];
 
-	// 4*6, 4*6, 4*6, 1*6
-	for (int i = 0; i < 6; i++) {  // bottom, up, left, right, front, back
-		int nextIndex = this->vertices.size();  // 4 index represent a face
-		for (int j = 0; j < 4; j++) {
-			int vi = 4 * 3 * i + 3 * j;
-			this->vertices.push_back(glm::ivec3(
-				position.x + orv[vi],
-				position.y + orv[vi+1],
-				position.z + orv[vi+2]));
+	// 3*2*6, 3*2*6, 3*2*6, 2*6
+	for (int i = 0; i < 6; i++) {
+		unsigned int nextIndex = this->vertices.size();  // 3 index represent a face
+		for (int j = 0; j < 6; j++) {
+			int vi = 6 * 3 * i + 3 * j;  // index in orv
+			this->vertices.push_back(position + glm::ivec3(orv[vi], orv[vi+1], orv[vi+2]));
 
-			int ni = 3 * j;
+			int ni = 3 * i;
 			this->normals.push_back(glm::ivec3(orn[ni], orn[ni+1], orn[ni+2]));
 
 			int ti = 2 * j;
 			this->textures.push_back(glm::ivec3(ort[ti], ort[ti+1], ori[i]));
 		}
-		this->elements.push_back(glm::ivec4(nextIndex, nextIndex + 1, nextIndex + 2, nextIndex + 3));
+		// generate 2 faces here
+		this->elements.push_back(glm::uvec3(nextIndex  , nextIndex+1, nextIndex+2));
+		this->elements.push_back(glm::uvec3(nextIndex+3, nextIndex+4, nextIndex+5));
 	}
 
 	return true;
@@ -108,14 +92,14 @@ bool Store::removeCube(const glm::ivec3 & position)
 		return false;
 	}
 
-	int beginBias = 6 * groundBias + (cubeIndex - 1) * 24;
-	int endBias = 6 * groundBias + cubeIndex * 24;
+	int beginBias = 2*3 * groundBias + (cubeIndex - 1) * 6*2*3;
+	int endBias = 2*3 * groundBias + cubeIndex * 6*2*3;
 	this->vertices.erase(this->vertices.begin() + beginBias, this->vertices.begin() + endBias);
 	this->normals.erase(this->normals.begin() + beginBias, this->normals.begin() + endBias);
 	this->textures.erase(this->textures.begin() + beginBias, this->textures.begin() + endBias);
 
-	beginBias = 1 * groundBias + (cubeIndex - 1) * 6;
-	endBias = 1 * groundBias + cubeIndex * 6;
+	beginBias = 2 * groundBias + (cubeIndex - 1) * 6*2;
+	endBias = 2 * groundBias + cubeIndex * 6*2;
 	this->elements.erase(this->elements.begin() + beginBias, this->elements.begin() + endBias);
 
 	return true;
@@ -130,33 +114,28 @@ void Store::draw()
 }
 
 
+//////////////////////////////////////////////////////////////////////////
 // private functions
 
 // only called for none ground
-// means it is occupied by cube
-bool Store::isOccupied(const glm::ivec3 & position)
-{
-	if (this->getCubeIndex(position) <= 0) {
-		return false;
-	}
-	else {
-		return true;
-	}
-}
-
-// only called for none ground
+/*
+ * <0 for not exits such cube
+ * =0 for under ground
+ * >0 for exits such cube, return cube index 1, 2, 3, ...
+ */
 int Store::getCubeIndex(const glm::ivec3 & position)
 {
 	const int groundBias = this->isGround ? 1 : 0;
+	const int interval = 6 * 2 * 3;
 
 	if (position.y < 0) {  // under ground
 		return 0;
 	}
 
 	for (int i = 0; i < this->vertices.size(); i++) {
-		if ((i - groundBias) % 24 == 0) {
+		if ((i - groundBias) % interval == 0) {
 			if (this->vertices[i] == position) {
-				return (i - groundBias) / 24 + 1;
+				return (i - groundBias) / interval + 1;
 			}
 		}
 	}
@@ -170,16 +149,27 @@ void Store::addGround()
 		this->vertices.push_back(glm::ivec3(-100, 0, -100));
 		this->vertices.push_back(glm::ivec3(-100, 0, 100));
 		this->vertices.push_back(glm::ivec3(100, 0, 100));
+		this->vertices.push_back(glm::ivec3(100, 0, 100));
 		this->vertices.push_back(glm::ivec3(100, 0, -100));
+		this->vertices.push_back(glm::ivec3(-100, 0, -100));
+
 		this->normals.push_back(glm::ivec3(0, 1, 0));
 		this->normals.push_back(glm::ivec3(0, 1, 0));
 		this->normals.push_back(glm::ivec3(0, 1, 0));
 		this->normals.push_back(glm::ivec3(0, 1, 0));
+		this->normals.push_back(glm::ivec3(0, 1, 0));
+		this->normals.push_back(glm::ivec3(0, 1, 0));
+
+		this->textures.push_back(glm::ivec3(0, 0, 0));
 		this->textures.push_back(glm::ivec3(0, 1, 0));
+		this->textures.push_back(glm::ivec3(1, 1, 0));
 		this->textures.push_back(glm::ivec3(1, 1, 0));
 		this->textures.push_back(glm::ivec3(1, 0, 0));
 		this->textures.push_back(glm::ivec3(0, 0, 0));
-		this->elements.push_back(glm::ivec4(0, 1, 2, 3));  // !!!must be called first
+
+		// !!!must be called first, ground should be the head of these vectors
+		this->elements.push_back(glm::uvec3(0, 1, 2));
+		this->elements.push_back(glm::uvec3(3, 4, 5));
 }
 
 /*

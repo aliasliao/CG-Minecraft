@@ -12,13 +12,14 @@ Store::Store(bool needGround)
 	this->initBuffers();
 }
 
-Store::Store(const std::string fileName, bool hasGround)
+Store::Store(const std::string &fileName, bool hasGround)
 {
 	this->hasGround = hasGround;
 	if (!hasGround) {  // a scene always need a ground
 		this->addGround();
 	}
 	this->initBuffers();
+	this->loadState(fileName);
 }
 
 // only for none ground
@@ -176,12 +177,12 @@ void Store::addGround()
 		this->normals.push_back(glm::ivec3(0, 1, 0));
 		this->normals.push_back(glm::ivec3(0, 1, 0));
 
-		this->textures.push_back(glm::ivec3(0, 0, 0));
-		this->textures.push_back(glm::ivec3(0, 1, 0));
-		this->textures.push_back(glm::ivec3(1, 1, 0));
-		this->textures.push_back(glm::ivec3(1, 1, 0));
-		this->textures.push_back(glm::ivec3(1, 0, 0));
-		this->textures.push_back(glm::ivec3(0, 0, 0));
+		this->textures.push_back(glm::ivec3(0, 0, 1));
+		this->textures.push_back(glm::ivec3(0, 1, 1));
+		this->textures.push_back(glm::ivec3(1, 1, 1));
+		this->textures.push_back(glm::ivec3(1, 1, 1));
+		this->textures.push_back(glm::ivec3(1, 0, 1));
+		this->textures.push_back(glm::ivec3(0, 0, 1));
 
 		// !!!must be called first, ground should be the head of these vectors
 		this->elements.push_back(glm::uvec3(0, 1, 2));
@@ -263,4 +264,11 @@ void Store::upload()
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 	glBindVertexArray(0);  // break the existing vertex array object binding
+}
+
+bool Store::loadState(const std::string & fileName)
+{
+	const std::string fullName = "models/" + fileName;
+
+	return true;
 }

@@ -20,11 +20,13 @@ class Store {
 	void addGround();
 	void upload();  // upload buffer to gpu
 	int getCubeIndex(const glm::ivec3 & position);  // 0 for ground
+	bool loadState(const std::string &fileName);
+	bool loadExternal(const std::string &fileName);
 	
 public:
 	Store(bool needGround=false);  // whether the store need a ground
-	Store(const std::string fileName, bool hasGround=true);  // load from file, whether the obj has a ground
-	bool saveFile(const std::string &fileName);  // save to file
+	Store(const std::string &fileName, bool hasGround=true);  // load from file, whether the obj has a ground
+	bool saveState(const std::string &fileName);  // save to file
 	bool addCube(const glm::ivec3 &position, const CubeType type);
 	bool removeCube(const glm::ivec3 &position);
 	void draw();

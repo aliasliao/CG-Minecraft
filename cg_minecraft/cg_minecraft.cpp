@@ -5,12 +5,12 @@
 #include <GL/glew.h>
 #include <SFML/Window.hpp>
 #include <iostream>
-//#include "test.h"
+#include "test.h"
 
 
 int main()
 {
-	//test();
+	test();
 	sf::ContextSettings settings;
 	settings.depthBits = 24;
 	settings.stencilBits = 8;

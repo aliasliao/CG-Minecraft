@@ -8,7 +8,7 @@ class TexTure {
 public:
 	std::map<CubeType, std::map<Direction, int>> tex;
 
-	TexTure();
+	TexTure() {}
 };
 
 TexTure TEX = TexTure();

@@ -25,5 +25,8 @@ void test() {
 	float *cp = (float *)cd;
 	int *np = (int *)nd;
 
+	auto begIter = coords.begin() + 1;
+	auto endIter = coords.begin() + 2;
+
 	return;
 }

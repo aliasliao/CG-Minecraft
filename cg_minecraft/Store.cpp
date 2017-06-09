@@ -3,31 +3,25 @@
 #include "Store.h"
 #include "Texture.h"
 
-bool Store::addCube(const glm::ivec3 &position,
-	const CubeType type,
-	const Direction zFacedirection)
+Store::Store(bool isGround)
+{
+	this->isGround = isGround;
+	this->initBuffers();
+	if (isGround) {
+		this->addGround();
+	}
+}
+
+// only for none ground
+bool Store::addCube(
+	const glm::ivec3 &position,
+	const CubeType type,  // type is CubeType other than GROUND
+	const Direction zFacedirection
+)
 {
 	if (this->isOccupied(position) || position.y<0) {
 		std::cout << "position has been occupied or underground" << std::endl;
 		return false;
-	}
-
-	if (type == GROUND) {
-		this->vertices.push_back(glm::ivec3(-100, 0, -100));
-		this->vertices.push_back(glm::ivec3(-100, 0, 100));
-		this->vertices.push_back(glm::ivec3(100, 0, 100));
-		this->vertices.push_back(glm::ivec3(100, 0, -100));
-		this->normals.push_back(glm::ivec3(0, 1, 0));
-		this->normals.push_back(glm::ivec3(0, 1, 0));
-		this->normals.push_back(glm::ivec3(0, 1, 0));
-		this->normals.push_back(glm::ivec3(0, 1, 0));
-		this->textures.push_back(glm::ivec3(0, 1, 0));
-		this->textures.push_back(glm::ivec3(1, 1, 0));
-		this->textures.push_back(glm::ivec3(1, 0, 0));
-		this->textures.push_back(glm::ivec3(0, 0, 0));
-		this->elements.push_back(glm::ivec4(0, 1, 2, 3));  // !!!must be called first
-
-		return true;
 	}
 
 	// vertices
@@ -81,8 +75,6 @@ bool Store::addCube(const glm::ivec3 &position,
 			break;
 	}
 
-	// elements
-
 	// 4*6, 4*6, 4*6, 1*6
 	for (int i = 0; i < 6; i++) {  // bottom, up, left, right, front, back
 		int nextIndex = this->vertices.size();  // 4 index represent a face
@@ -105,8 +97,10 @@ bool Store::addCube(const glm::ivec3 &position,
 	return true;
 }
 
+// only called for NONE ground
 bool Store::removeCube(const glm::ivec3 & position)
 {
+	const int groundBias = this->isGround ? 1 : 0;
 	const int cubeIndex = this->getCubeIndex(position);
 
 	if (cubeIndex <= 0) {
@@ -114,5 +108,151 @@ bool Store::removeCube(const glm::ivec3 & position)
 		return false;
 	}
 
+	int beginBias = 6 * groundBias + (cubeIndex - 1) * 24;
+	int endBias = 6 * groundBias + cubeIndex * 24;
+	this->vertices.erase(this->vertices.begin() + beginBias, this->vertices.begin() + endBias);
+	this->normals.erase(this->normals.begin() + beginBias, this->normals.begin() + endBias);
+	this->textures.erase(this->textures.begin() + beginBias, this->textures.begin() + endBias);
+
+	beginBias = 1 * groundBias + (cubeIndex - 1) * 6;
+	endBias = 1 * groundBias + cubeIndex * 6;
+	this->elements.erase(this->elements.begin() + beginBias, this->elements.begin() + endBias);
+
 	return true;
+}
+
+// need shader information
+void Store::draw()
+{
+	glBindVertexArray(this->vao);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, this->elementEbo);
+	glDrawElements()
+}
+
+
+// private functions
+
+// only called for none ground
+// means it is occupied by cube
+bool Store::isOccupied(const glm::ivec3 & position)
+{
+	if (this->getCubeIndex(position) <= 0) {
+		return false;
+	}
+	else {
+		return true;
+	}
+}
+
+// only called for none ground
+int Store::getCubeIndex(const glm::ivec3 & position)
+{
+	const int groundBias = this->isGround ? 1 : 0;
+
+	if (position.y < 0) {  // under ground
+		return 0;
+	}
+
+	for (int i = 0; i < this->vertices.size(); i++) {
+		if ((i - groundBias) % 24 == 0) {
+			if (this->vertices[i] == position) {
+				return (i - groundBias) / 24 + 1;
+			}
+		}
+	}
+
+	return -1;  // not exits such cube
+}
+
+// only called for ground
+void Store::addGround()
+{
+		this->vertices.push_back(glm::ivec3(-100, 0, -100));
+		this->vertices.push_back(glm::ivec3(-100, 0, 100));
+		this->vertices.push_back(glm::ivec3(100, 0, 100));
+		this->vertices.push_back(glm::ivec3(100, 0, -100));
+		this->normals.push_back(glm::ivec3(0, 1, 0));
+		this->normals.push_back(glm::ivec3(0, 1, 0));
+		this->normals.push_back(glm::ivec3(0, 1, 0));
+		this->normals.push_back(glm::ivec3(0, 1, 0));
+		this->textures.push_back(glm::ivec3(0, 1, 0));
+		this->textures.push_back(glm::ivec3(1, 1, 0));
+		this->textures.push_back(glm::ivec3(1, 0, 0));
+		this->textures.push_back(glm::ivec3(0, 0, 0));
+		this->elements.push_back(glm::ivec4(0, 1, 2, 3));  // !!!must be called first
+}
+
+/*
+ * in vertex shader:
+ * vertex location=0, normal location=1, texture location=2
+ **/
+void Store::initBuffers()
+{
+	glGenVertexArrays(1, &this->vao);
+	glBindVertexArray(this->vao);
+
+	glGenBuffers(1, &this->vertexVbo);
+	glBindBuffer(GL_ARRAY_BUFFER, this->vertexVbo);
+	glEnableVertexAttribArray(0);
+	glVertexAttribPointer(0, 3, GL_INT, GL_FALSE, 0, 0);
+
+	glGenBuffers(1, &this->normalVbo);
+	glBindBuffer(GL_ARRAY_BUFFER, this->normalVbo);
+	glEnableVertexAttribArray(1);
+	glVertexAttribPointer(1, 3, GL_INT, GL_FALSE, 0, 0);
+
+	glGenBuffers(1, &this->textureVbo);
+	glBindBuffer(GL_ARRAY_BUFFER, this->textureVbo);
+	glEnableVertexAttribArray(2);
+	glVertexAttribPointer(2, 3, GL_INT, GL_FALSE, 0, 0);
+
+	glGenBuffers(1, &this->elementEbo);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, this->elementEbo);
+
+	// unbind buffers
+	glBindBuffer(GL_ARRAY_BUFFER, 0);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+	glBindVertexArray(0);  // break the existing vertex array object binding
+}
+
+void Store::upload()
+{
+	glBindVertexArray(this->vao);
+
+	glBindBuffer(GL_ARRAY_BUFFER, this->vertexVbo);
+	glBufferData(
+		GL_ARRAY_BUFFER,
+		this->vertices.size() * sizeof(this->vertices[0]),
+		this->vertices.data(),
+		GL_STATIC_DRAW
+	);
+
+	glBindBuffer(GL_ARRAY_BUFFER, this->normalVbo);
+	glBufferData(
+		GL_ARRAY_BUFFER,
+		this->normals.size() * sizeof(this->normals[0]),
+		this->normals.data(),
+		GL_STATIC_DRAW
+	);
+
+	glBindBuffer(GL_ARRAY_BUFFER, this->textureVbo);
+	glBufferData(
+		GL_ARRAY_BUFFER,
+		this->textures.size() * sizeof(this->textures[0]),
+		this->textures.data(),
+		GL_STATIC_DRAW
+	);
+
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, this->elementEbo);
+	glBufferData(
+		GL_ELEMENT_ARRAY_BUFFER,
+		this->elements.size() * sizeof(this->elements[0]),
+		this->elements.data(),
+		GL_STATIC_DRAW
+	);
+
+	// unbind buffers
+	glBindBuffer(GL_ARRAY_BUFFER, 0);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+	glBindVertexArray(0);  // break the existing vertex array object binding
 }

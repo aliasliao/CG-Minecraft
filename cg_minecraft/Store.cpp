@@ -321,11 +321,11 @@ bool Store::loadState(const std::string & fileName)
 	}
 
 	fclose(fp);
-
 	return true;
 }
 
 // only have v, f
+// TODO: generate normals
 bool Store::loadExternal(const std::string & fileName)
 {
 	FILE *fp = fopen(fileName.c_str(), "r");
@@ -338,7 +338,7 @@ bool Store::loadExternal(const std::string & fileName)
 	float vx, vy, vz;
 	float nx, ny, nz;
 	int tx, ty, tt;
-	unsigned int ev1, ev2, ev3, tmp;
+	unsigned int ev1, ev2, ev3;
 
 	while (true) {
 		int size = fscanf(fp, "%s", lineHeader);
@@ -353,7 +353,7 @@ bool Store::loadExternal(const std::string & fileName)
 			this->textures.push_back(glm::ivec3(0, 0, 0));
 		}
 		else if (strcmp(lineHeader, "f") == 0) {
-			fscanf(fp, "%d/%d/%d %d/%d/%d %d/%d/%dn", &ev1, &tmp, &tmp, &ev2, &tmp, &tmp, &ev3, &tmp, &tmp);
+			fscanf(fp, "%d %d %dn", &ev1, &ev2, &ev3);
 			this->elements.push_back(glm::uvec3(ev1, ev2, ev3));
 		}
 		else {
@@ -362,7 +362,6 @@ bool Store::loadExternal(const std::string & fileName)
 	}
 
 	fclose(fp);
-
 	return true;
 }
 
@@ -386,7 +385,7 @@ bool Store::saveState(const std::string & fileName)
 
 	fprintf(fp, "# textures\n");
 	for (auto it = this->textures.begin(); it != this->textures.end(); it++) {
-		fprintf(fp, "vn %d %d %d\n", it->x, it->y, it->z);
+		fprintf(fp, "vt %d %d %d\n", it->x, it->y, it->z);
 	}
 
 	fprintf(fp, "# faces\n");
@@ -394,5 +393,6 @@ bool Store::saveState(const std::string & fileName)
 		fprintf(fp, "f %d/%d/%d %d/%d/%d %d/%d/%d\n", it->x, it->x, it->x, it->y, it->y, it->y, it->z, it->z, it->z);
 	}
 
+	fclose(fp);
 	return true;
 }

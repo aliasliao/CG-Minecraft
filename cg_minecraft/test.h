@@ -28,8 +28,5 @@ void test() {
 	auto begIter = coords.begin() + 1;
 	auto endIter = coords.begin() + 2;
 
-	const std::string &s = "hello";
-	std::cout << "sad" + s << std::endl;
-
 	return;
 }

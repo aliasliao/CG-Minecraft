@@ -6,6 +6,7 @@
 #include <SFML/Window.hpp>
 #include <iostream>
 #include "test.h"
+#include "Store.h"
 
 
 int main()
@@ -18,6 +19,11 @@ int main()
 
 	glewExperimental = GL_TRUE;
 	glewInit();
+
+	//////////////////////////////////////////////////////////////////////////
+	Store g = Store(true);
+	g.saveState("models/test.obj");
+	//////////////////////////////////////////////////////////////////////////
 
 	bool running = true;
 	while (running)

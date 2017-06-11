@@ -1,25 +1,29 @@
 #include "stdafx.h"
+#include <string>
 #include <cstdlib>
+#include <cstring>
 #include "Store.h"
 #include "Texture.h"
 
-Store::Store(bool needGround)
+Store::Store(bool isGround)
 {
-	if (needGround) {
+	if (isGround) {
 		this->addGround();
 	}
-	this->hasGround = needGround;
+	this->isGround = isGround;
 	this->initBuffers();
 }
 
-Store::Store(const std::string &fileName, bool hasGround)
+Store::Store(const std::string &fileName, bool isExternal)
 {
-	this->hasGround = hasGround;
-	if (!hasGround) {  // a scene always need a ground
-		this->addGround();
-	}
+	this->isGround = false;
 	this->initBuffers();
-	this->loadState(fileName);
+	if (isExternal) {
+		this->loadExternal(fileName);
+	}
+	else {
+		this->loadState(fileName);
+	}
 }
 
 // only for none ground
@@ -96,7 +100,7 @@ bool Store::addCube(
 // only called for NONE ground
 bool Store::removeCube(const glm::ivec3 & position)
 {
-	const int groundBias = this->hasGround ? 1 : 0;
+	const int groundBias = this->isGround ? 1 : 0;
 	const int cubeIndex = this->getCubeIndex(position);
 
 	if (cubeIndex <= 0) {
@@ -142,16 +146,16 @@ void Store::draw()
  */
 int Store::getCubeIndex(const glm::ivec3 & position)
 {
-	const int groundBias = this->hasGround ? 1 : 0;
+	const int groundBias = this->isGround ? 1 : 0;
 	const int interval = 6 * 2 * 3;
 
 	if (position.y < 0) {  // under ground
 		return 0;
 	}
 
-	for (int i = 0; i < this->vertices.size(); i++) {
+	for (unsigned int i = 0; i < this->vertices.size(); i++) {
 		if ((i - groundBias) % interval == 0) {
-			if (this->vertices[i] == position) {
+			if (this->vertices[i] == glm::vec3(position)) {
 				return (i - groundBias) / interval + 1;
 			}
 		}
@@ -161,39 +165,48 @@ int Store::getCubeIndex(const glm::ivec3 & position)
 }
 
 // only called for ground
-void Store::addGround()
+bool Store::addGround()
 {
-		this->vertices.push_back(glm::ivec3(-100, 0, -100));
-		this->vertices.push_back(glm::ivec3(-100, 0, 100));
-		this->vertices.push_back(glm::ivec3(100, 0, 100));
-		this->vertices.push_back(glm::ivec3(100, 0, 100));
-		this->vertices.push_back(glm::ivec3(100, 0, -100));
-		this->vertices.push_back(glm::ivec3(-100, 0, -100));
+	if (this->vertices.size() > 0) {
+		std::cout << "fatal error: add ground to not empty store!" << std::endl;
+		return false;
+	}
 
-		this->normals.push_back(glm::ivec3(0, 1, 0));
-		this->normals.push_back(glm::ivec3(0, 1, 0));
-		this->normals.push_back(glm::ivec3(0, 1, 0));
-		this->normals.push_back(glm::ivec3(0, 1, 0));
-		this->normals.push_back(glm::ivec3(0, 1, 0));
-		this->normals.push_back(glm::ivec3(0, 1, 0));
+	this->vertices.push_back(glm::ivec3(-100, 0, -100));
+	this->vertices.push_back(glm::ivec3(-100, 0, 100));
+	this->vertices.push_back(glm::ivec3(100, 0, 100));
+	this->vertices.push_back(glm::ivec3(100, 0, 100));
+	this->vertices.push_back(glm::ivec3(100, 0, -100));
+	this->vertices.push_back(glm::ivec3(-100, 0, -100));
 
-		this->textures.push_back(glm::ivec3(0, 0, 1));
-		this->textures.push_back(glm::ivec3(0, 1, 1));
-		this->textures.push_back(glm::ivec3(1, 1, 1));
-		this->textures.push_back(glm::ivec3(1, 1, 1));
-		this->textures.push_back(glm::ivec3(1, 0, 1));
-		this->textures.push_back(glm::ivec3(0, 0, 1));
+	this->normals.push_back(glm::ivec3(0, 1, 0));
+	this->normals.push_back(glm::ivec3(0, 1, 0));
+	this->normals.push_back(glm::ivec3(0, 1, 0));
+	this->normals.push_back(glm::ivec3(0, 1, 0));
+	this->normals.push_back(glm::ivec3(0, 1, 0));
+	this->normals.push_back(glm::ivec3(0, 1, 0));
 
-		// !!!must be called first, ground should be the head of these vectors
-		this->elements.push_back(glm::uvec3(0, 1, 2));
-		this->elements.push_back(glm::uvec3(3, 4, 5));
+	this->textures.push_back(glm::ivec3(0, 0, 1));
+	this->textures.push_back(glm::ivec3(0, 1, 1));
+	this->textures.push_back(glm::ivec3(1, 1, 1));
+	this->textures.push_back(glm::ivec3(1, 1, 1));
+	this->textures.push_back(glm::ivec3(1, 0, 1));
+	this->textures.push_back(glm::ivec3(0, 0, 1));
 
-		this->upload();
+	// !!!must be called first, ground should be the head of these vectors
+	this->elements.push_back(glm::uvec3(0, 1, 2));
+	this->elements.push_back(glm::uvec3(3, 4, 5));
+
+	this->upload();
+
+	return true;
 }
 
 /*
  * in vertex shader:
- * vertex location=0, normal location=1, texture location=2
+ * vertex location=0,
+ * normal location=1,
+ * texture location=2
  **/
 void Store::initBuffers()
 {
@@ -203,12 +216,12 @@ void Store::initBuffers()
 	glGenBuffers(1, &this->vertexVbo);
 	glBindBuffer(GL_ARRAY_BUFFER, this->vertexVbo);
 	glEnableVertexAttribArray(0);
-	glVertexAttribPointer(0, 3, GL_INT, GL_FALSE, 0, 0);
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, 0);
 
 	glGenBuffers(1, &this->normalVbo);
 	glBindBuffer(GL_ARRAY_BUFFER, this->normalVbo);
 	glEnableVertexAttribArray(1);
-	glVertexAttribPointer(1, 3, GL_INT, GL_FALSE, 0, 0);
+	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 0, 0);
 
 	glGenBuffers(1, &this->textureVbo);
 	glBindBuffer(GL_ARRAY_BUFFER, this->textureVbo);
@@ -268,7 +281,118 @@ void Store::upload()
 
 bool Store::loadState(const std::string & fileName)
 {
-	const std::string fullName = "models/" + fileName;
+	FILE *fp = fopen(fileName.c_str(), "r");
+	if (fp == NULL) {
+		std::cout << "can not open file " << fileName << std::endl;
+		return false;
+	}
+
+	char lineHeader[8];
+	float vx, vy, vz;
+	float nx, ny, nz;
+	int tx, ty, tt;
+	unsigned int ev1, ev2, ev3, tmp;
+
+	while (true) {
+		int size = fscanf(fp, "%s", lineHeader);
+		if (size == EOF) {
+			break;
+		}
+
+		if (strcmp(lineHeader, "v") == 0) {
+			fscanf(fp, "%f %f %fn", &vx, &vy, &vz);
+			this->vertices.push_back(glm::vec3(vx, vy, vz));
+		}
+		else if (strcmp(lineHeader, "vn") == 0) {
+			fscanf(fp, "%f %f %fn", &nx, &ny, &nz);
+			this->normals.push_back(glm::vec3(nx, ny, nz));
+		}
+		else if (strcmp(lineHeader, "vt") == 0) {
+			fscanf(fp, "%d %d %dn", &tx, &ty, &tt);
+			this->textures.push_back(glm::ivec3(tx, ty, tt));
+		}
+		else if (strcmp(lineHeader, "f") == 0) {
+			fscanf(fp, "%d/%d/%d %d/%d/%d %d/%d/%dn", &ev1, &tmp, &tmp, &ev2, &tmp, &tmp, &ev3, &tmp, &tmp);
+			this->elements.push_back(glm::uvec3(ev1, ev2, ev3));
+		}
+		else {
+			// ignore blank line and # comment line
+		}
+	}
+
+	fclose(fp);
+
+	return true;
+}
+
+// only have v, f
+bool Store::loadExternal(const std::string & fileName)
+{
+	FILE *fp = fopen(fileName.c_str(), "r");
+	if (fp == NULL) {
+		std::cout << "can not open external file " << fileName << std::endl;
+		return false;
+	}
+
+	char lineHeader[8];
+	float vx, vy, vz;
+	float nx, ny, nz;
+	int tx, ty, tt;
+	unsigned int ev1, ev2, ev3, tmp;
+
+	while (true) {
+		int size = fscanf(fp, "%s", lineHeader);
+		if (size == EOF) {
+			break;
+		}
+
+		if (strcmp(lineHeader, "v") == 0) {
+			fscanf(fp, "%f %f %fn", &vx, &vy, &vz);
+			this->vertices.push_back(glm::vec3(vx, vy, vz));
+			this->normals.push_back(glm::vec3(0, 0, 0));
+			this->textures.push_back(glm::ivec3(0, 0, 0));
+		}
+		else if (strcmp(lineHeader, "f") == 0) {
+			fscanf(fp, "%d/%d/%d %d/%d/%d %d/%d/%dn", &ev1, &tmp, &tmp, &ev2, &tmp, &tmp, &ev3, &tmp, &tmp);
+			this->elements.push_back(glm::uvec3(ev1, ev2, ev3));
+		}
+		else {
+			// ignore blank line and # comment line
+		}
+	}
+
+	fclose(fp);
+
+	return true;
+}
+
+bool Store::saveState(const std::string & fileName)
+{
+	FILE *fp = fopen(fileName.c_str(), "w");
+	if (fp == NULL) {
+		std::cout << "can not write to file " << fileName << std::endl;
+		return false;
+	}
+
+	fprintf(fp, "# vertices\n");
+	for (auto it = this->vertices.begin(); it != this->vertices.end(); it++) {
+		fprintf(fp, "v %f %f %f\n", it->x, it->y, it->z);
+	}
+
+	fprintf(fp, "# normals\n");
+	for (auto it = this->normals.begin(); it != this->normals.end(); it++) {
+		fprintf(fp, "vn %f %f %f\n", it->x, it->y, it->z);
+	}
+
+	fprintf(fp, "# textures\n");
+	for (auto it = this->textures.begin(); it != this->textures.end(); it++) {
+		fprintf(fp, "vn %d %d %d\n", it->x, it->y, it->z);
+	}
+
+	fprintf(fp, "# faces\n");
+	for (auto it = this->elements.begin(); it != this->elements.end(); it++) {
+		fprintf(fp, "f %d/%d/%d %d/%d/%d %d/%d/%d\n", it->x, it->x, it->x, it->y, it->y, it->y, it->z, it->z, it->z);
+	}
 
 	return true;
 }

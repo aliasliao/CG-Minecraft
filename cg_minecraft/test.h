@@ -8,7 +8,7 @@ void test() {
 	std::vector<glm::vec3> coords;
 	std::vector<int> nums;
 
-	coords.push_back(glm::vec3(1, 2, 3));
+	coords.push_back(glm::ivec3(1, 2, 3));
 	coords.push_back(glm::vec3(7, 8, 4));
 	coords.push_back(glm::vec3(5, 6, 5));
 
@@ -27,6 +27,9 @@ void test() {
 
 	auto begIter = coords.begin() + 1;
 	auto endIter = coords.begin() + 2;
+
+	const std::string &s = "hello";
+	std::cout << "sad" + s << std::endl;
 
 	return;
 }

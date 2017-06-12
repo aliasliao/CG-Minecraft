@@ -8,8 +8,9 @@
 #include "define.h"
 
 /*
- * 0 -- no texture (if texture=0, color=gray; else=texture color)
- * 1 -- ground / grass
+ * 0  -- default texture (if texture=0, color=gray; else=texture color)
+ * 1  -- ground / grass
+ * 16 -- transparent
  **/
 class TexTure {
 	void bindAndSet(const GLuint index, sf::Color color) {
@@ -102,23 +103,27 @@ class TexTure {
 		this->tex[ROSE			] = this->genCube(15, 15, 15, 15, 16, 16);
 	}
 
+	// remember to free!
+	void initIndexArray() {
+		const int size = this->tex.size();
+		this->indexArray = (GLuint *)malloc(size * sizeof(GLuint));
+		for (int i = 0; i < size; i++) {
+			this->indexArray[i] = i;
+		}
+	}
+
 public:
-	std::map<CubeType, std::map<Direction, int>> tex;
+	std::map<CubeType, std::map<Direction, int> > tex;
+	GLuint *indexArray;
 
 	TexTure() {
 		this->initUnit();
 		this->initTex();
+		this->initIndexArray();
 	}
 
-	// remember to free!
-	GLuint *getIndexArray() {
-		const int size = this->tex.size();
-		GLuint *array = (GLuint *)malloc(size * sizeof(GLuint));
-		for (int i = 0; i < size; i++) {
-			array[i] = i;
-		}
-
-		return array;
+	~TexTure() {
+		free(this->indexArray);
 	}
 };
 

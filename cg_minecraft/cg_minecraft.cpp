@@ -25,15 +25,14 @@ int main()
 	g.saveState("models/test.obj");
 	//////////////////////////////////////////////////////////////////////////
 
-	bool running = true;
-	while (running)
+	while (window.isOpen())
 	{
 		sf::Event windowEvent;
 		while (window.pollEvent(windowEvent))
 		{
 			switch (windowEvent.type) {
 				case sf::Event::Closed:
-					running = false;
+					window.close();
 					break;
 				case sf::Event::MouseMoved:
 					if (sf::Mouse::isButtonPressed(sf::Mouse::Left))

@@ -2,7 +2,9 @@
 
 enum CubeType
 {
-	GROUND, LIGHT, GRASS, DIRT, BRICK, BED_HEAD, BED_FEET, DOOR_HEAD, DOOR_FEET
+	DIRT, GRASS, BRICK, STONE,
+	BED_HEAD, BED_FEET,
+	CRAFTING_TABLE, ROSE
 };
 enum Direction  // cube to human
 {

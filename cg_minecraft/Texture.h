@@ -1,6 +1,6 @@
 #pragma once
 
-#include "GL/glew.h"
+#include <GL/glew.h>
 #include <SFML/Graphics.hpp>
 #include <map>
 #include <string>
@@ -41,6 +41,52 @@ class TexTure {
 		glBindTexture(GL_TEXTURE_2D, 0);
 	}
 
+	std::map<Direction, int> genCube(int f, int b, int l, int r, int u, int bo) {
+		std::map<Direction, int> tmp;
+		tmp[FRONT] = f;
+		tmp[BACK] = b;
+		tmp[LEFT] = l;
+		tmp[RIGHT] = r;
+		tmp[UP] = u;
+		tmp[BOTTOM] = bo;
+
+		return tmp;
+	}
+
+	void initTex() {
+		this->tex[DIRT			] = this->genCube( 2,  2,  2,  2,  2,  2);
+		this->tex[GRASS			] = this->genCube( 3,  3,  3,  3,  1,  2);
+		this->tex[BRICK			] = this->genCube( 4,  4,  4,  4,  4,  4);
+		this->tex[STONE			] = this->genCube( 5,  5,  5,  5,  5,  5);
+		this->tex[BED_HEAD		] = this->genCube(16, 12, 13, 13, 14, 14);
+		this->tex[BED_FEET		] = this->genCube( 9, 16, 10, 10, 11, 11);
+		this->tex[CRAFTING_TABLE] = this->genCube( 6,  6,  7,  7,  8,  8);
+		this->tex[ROSE			] = this->genCube(15, 15, 15, 15, 16, 16);
+	}
+
+	// remember to free!
+	void initIndexArray() {
+		const int size = this->tex.size();
+		this->indexArray = (GLuint *)malloc(size * sizeof(GLuint));
+		for (int i = 0; i < size; i++) {
+			this->indexArray[i] = i;
+		}
+	}
+
+public:
+	std::map<CubeType, std::map<Direction, int> > tex;
+	GLuint *indexArray;
+
+	TexTure() {
+		//this->initUnit();
+		this->initTex();
+		this->initIndexArray();
+	}
+
+	~TexTure() {
+		free(this->indexArray);
+	}
+
 	void initUnit() {
 		GLuint textures[64];
 
@@ -79,52 +125,7 @@ class TexTure {
 		glActiveTexture(GL_TEXTURE16);
 		this->bindAndSet(textures[16], sf::Color::Transparent);
 	}
-
-	std::map<Direction, int> genCube(int f, int b, int l, int r, int u, int bo) {
-		std::map<Direction, int> tmp;
-		tmp[FRONT] = f;
-		tmp[BACK] = b;
-		tmp[LEFT] = l;
-		tmp[RIGHT] = r;
-		tmp[UP] = u;
-		tmp[BOTTOM] = bo;
-
-		return tmp;
-	}
-
-	void initTex() {
-		this->tex[DIRT			] = this->genCube( 2,  2,  2,  2,  2,  2);
-		this->tex[GRASS			] = this->genCube( 3,  3,  3,  3,  1,  2);
-		this->tex[BRICK			] = this->genCube( 4,  4,  4,  4,  4,  4);
-		this->tex[STONE			] = this->genCube( 5,  5,  5,  5,  5,  5);
-		this->tex[BED_HEAD		] = this->genCube(16, 12, 13, 13, 14, 14);
-		this->tex[BED_FEET		] = this->genCube( 9, 16, 10, 10, 11, 11);
-		this->tex[CRAFTING_TABLE] = this->genCube( 6,  6,  7,  7,  8,  8);
-		this->tex[ROSE			] = this->genCube(15, 15, 15, 15, 16, 16);
-	}
-
-	// remember to free!
-	void initIndexArray() {
-		const int size = this->tex.size();
-		this->indexArray = (GLuint *)malloc(size * sizeof(GLuint));
-		for (int i = 0; i < size; i++) {
-			this->indexArray[i] = i;
-		}
-	}
-
-public:
-	std::map<CubeType, std::map<Direction, int> > tex;
-	GLuint *indexArray;
-
-	TexTure() {
-		this->initUnit();
-		this->initTex();
-		this->initIndexArray();
-	}
-
-	~TexTure() {
-		free(this->indexArray);
-	}
 };
 
+// !!!fatal error here!!!
 TexTure TEX = TexTure();

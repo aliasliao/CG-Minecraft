@@ -336,8 +336,6 @@ bool Store::loadExternal(const std::string & fileName)
 
 	char lineHeader[8];
 	float vx, vy, vz;
-	float nx, ny, nz;
-	int tx, ty, tt;
 	unsigned int ev1, ev2, ev3;
 
 	while (true) {

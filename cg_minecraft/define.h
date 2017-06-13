@@ -10,3 +10,7 @@ enum Direction  // cube to human
 {
 	FRONT, BACK, LEFT, RIGHT, UP, BOTTOM
 };
+enum class cam
+{
+	front, back, left, right
+};

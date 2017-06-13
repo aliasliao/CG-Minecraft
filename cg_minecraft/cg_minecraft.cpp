@@ -5,13 +5,13 @@
 #include <GL/glew.h>
 #include <SFML/Window.hpp>
 #include <iostream>
-#include "test.h"
+//#include "test.h"
 #include "Store.h"
 
 
 int main()
 {
-	test();
+	//test();
 	sf::ContextSettings settings;
 	settings.depthBits = 24;
 	settings.stencilBits = 8;
@@ -21,8 +21,8 @@ int main()
 	glewInit();
 
 	//////////////////////////////////////////////////////////////////////////
-	Store g = Store(true);
-	g.saveState("models/test.obj");
+	//Store g = Store(true);
+	//g.saveState("models/test.obj");
 	//////////////////////////////////////////////////////////////////////////
 
 	while (window.isOpen())
@@ -57,6 +57,7 @@ int main()
 					break;
 			}
 		}
+		//std::cout << "*****display stage*****" << std::endl;
 
 		window.display();
 	}

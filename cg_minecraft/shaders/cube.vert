@@ -2,10 +2,10 @@
 
 layout (location = 0) in vec3 vertPos;
 layout (location = 1) in vec3 normal;
-layout (location = 2) in ivec3 textureVec;
+layout (location = 2) in vec3 textureVec;
 
 out vec3 FragPos;
-out ivec3 TextureVec;
+out vec3 TextureVec;
 out vec3 Normal;
 
 uniform mat4 model;

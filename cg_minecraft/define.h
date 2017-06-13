@@ -1,12 +1,12 @@
 #pragma once
 
-enum CubeType
+enum class cub
 {
 	DIRT, GRASS, BRICK, STONE,
 	BED_HEAD, BED_FEET,
 	CRAFTING_TABLE, ROSE
 };
-enum Direction  // cube to human
+enum class dir  // cube to human
 {
 	FRONT, BACK, LEFT, RIGHT, UP, BOTTOM
 };

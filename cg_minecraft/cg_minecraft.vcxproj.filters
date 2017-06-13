@@ -53,9 +53,14 @@
     <ClCompile Include="Store.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="Texture.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="shaders\cube.vert" />
     <None Include="shaders\cube.frag" />
+    <None Include="shaders\simple.vert" />
+    <None Include="shaders\simple.frag" />
   </ItemGroup>
 </Project>

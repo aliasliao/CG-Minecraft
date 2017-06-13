@@ -1,7 +1,7 @@
 #version 400 core
 
 in vec3 FragPos;
-in ivec3 TextureVec;
+in vec3 TextureVec;
 in vec3 Normal;
 
 out vec4 FragColor;  // default output as gl_FragColor
@@ -9,15 +9,12 @@ out vec4 FragColor;  // default output as gl_FragColor
 uniform vec3 lightPos;
 uniform vec3 viewPos;
 uniform vec3 lightColor;
-uniform sampler2D textures[17];
+uniform sampler2DArray texes;
 
 void main()
 {
 	// texture color
-	vec2 TexCoord = vec2(TextureVec);
-	int index = TextureVec.z;
-	vec3 objectColor = texture(textures[index], TexCoord);
-
+	vec3 objectColor = vec3(texture(texes, TextureVec));
 
 	// ambient
     float ambientStrength = 0.1;

@@ -29,10 +29,11 @@ Store::Store(const std::string &fileName, bool isExternal)
 // only for none ground
 bool Store::addCube(
 	const glm::ivec3 &position,
-	const CubeType type  // type is CubeType other than GROUND
+	const cub type,  // type is CubeType other than GROUND
+	Texture &TEX
 )
 {
-	if (this->getCubeIndex(position) <= 0) {
+	if (this->getCubeIndex(position) >= 0) {
 		std::cout << "position has been occupied or underground" << std::endl;
 		return false;
 	}
@@ -67,12 +68,12 @@ bool Store::addCube(
 
 	// texture index
 	int ori[6];  // 6 faces texture index
-	ori[0]= TEX.tex[type][BOTTOM];
-	ori[1]= TEX.tex[type][UP];
-	ori[2]= TEX.tex[type][LEFT];
-	ori[3]= TEX.tex[type][RIGHT];
-	ori[4]= TEX.tex[type][FRONT];
-	ori[5]= TEX.tex[type][BACK];
+	ori[0]= TEX.tex[type][dir::BOTTOM];
+	ori[1]= TEX.tex[type][dir::UP];
+	ori[2]= TEX.tex[type][dir::LEFT];
+	ori[3]= TEX.tex[type][dir::RIGHT];
+	ori[4]= TEX.tex[type][dir::FRONT];
+	ori[5]= TEX.tex[type][dir::BACK];
 
 	// 3*2*6, 3*2*6, 3*2*6, 2*6
 	for (int i = 0; i < 6; i++) {
@@ -88,7 +89,7 @@ bool Store::addCube(
 			this->textures.push_back(glm::ivec3(ort[ti], ort[ti+1], ori[i]));
 		}
 		// generate 2 faces here
-		this->elements.push_back(glm::uvec3(nextIndex  , nextIndex+1, nextIndex+2));
+		this->elements.push_back(glm::uvec3(nextIndex,   nextIndex+1, nextIndex+2));
 		this->elements.push_back(glm::uvec3(nextIndex+3, nextIndex+4, nextIndex+5));
 	}
 
@@ -186,12 +187,12 @@ bool Store::addGround()
 	this->normals.push_back(glm::ivec3(0, 1, 0));
 	this->normals.push_back(glm::ivec3(0, 1, 0));
 
-	this->textures.push_back(glm::ivec3(0, 0, 1));
-	this->textures.push_back(glm::ivec3(0, 1, 1));
-	this->textures.push_back(glm::ivec3(1, 1, 1));
-	this->textures.push_back(glm::ivec3(1, 1, 1));
-	this->textures.push_back(glm::ivec3(1, 0, 1));
-	this->textures.push_back(glm::ivec3(0, 0, 1));
+	this->textures.push_back(glm::ivec3(0, 0, 2));
+	this->textures.push_back(glm::ivec3(0, 1, 2));
+	this->textures.push_back(glm::ivec3(1, 1, 2));
+	this->textures.push_back(glm::ivec3(1, 1, 2));
+	this->textures.push_back(glm::ivec3(1, 0, 2));
+	this->textures.push_back(glm::ivec3(0, 0, 2));
 
 	// !!!must be called first, ground should be the head of these vectors
 	this->elements.push_back(glm::uvec3(0, 1, 2));
@@ -226,7 +227,7 @@ void Store::initBuffers()
 	glGenBuffers(1, &this->textureVbo);
 	glBindBuffer(GL_ARRAY_BUFFER, this->textureVbo);
 	glEnableVertexAttribArray(2);
-	glVertexAttribPointer(2, 3, GL_INT, GL_FALSE, 0, 0);
+	glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, 0, 0);
 
 	glGenBuffers(1, &this->elementEbo);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, this->elementEbo);
@@ -281,7 +282,9 @@ void Store::upload()
 
 bool Store::loadState(const std::string & fileName)
 {
-	FILE *fp = fopen(fileName.c_str(), "r");
+	const std::string fullName = "models/" + fileName;
+
+	FILE *fp = fopen(fullName.c_str(), "r");
 	if (fp == NULL) {
 		std::cout << "can not open file " << fileName << std::endl;
 		return false;
@@ -290,7 +293,7 @@ bool Store::loadState(const std::string & fileName)
 	char lineHeader[8];
 	float vx, vy, vz;
 	float nx, ny, nz;
-	int tx, ty, tt;
+	float tx, ty, tt;
 	unsigned int ev1, ev2, ev3, tmp;
 
 	while (true) {
@@ -308,12 +311,12 @@ bool Store::loadState(const std::string & fileName)
 			this->normals.push_back(glm::vec3(nx, ny, nz));
 		}
 		else if (strcmp(lineHeader, "vt") == 0) {
-			fscanf(fp, "%d %d %dn", &tx, &ty, &tt);
-			this->textures.push_back(glm::ivec3(tx, ty, tt));
+			fscanf(fp, "%f %f %fn", &tx, &ty, &tt);
+			this->textures.push_back(glm::vec3(tx, ty, tt));
 		}
 		else if (strcmp(lineHeader, "f") == 0) {
 			fscanf(fp, "%d/%d/%d %d/%d/%d %d/%d/%dn", &ev1, &tmp, &tmp, &ev2, &tmp, &tmp, &ev3, &tmp, &tmp);
-			this->elements.push_back(glm::uvec3(ev1, ev2, ev3));
+			this->elements.push_back(glm::uvec3(ev1-1, ev2-1, ev3-1));
 		}
 		else {
 			// ignore blank line and # comment line
@@ -328,7 +331,9 @@ bool Store::loadState(const std::string & fileName)
 // TODO: generate normals
 bool Store::loadExternal(const std::string & fileName)
 {
-	FILE *fp = fopen(fileName.c_str(), "r");
+	const std::string fullName = "models/" + fileName;
+
+	FILE *fp = fopen(fullName.c_str(), "r");
 	if (fp == NULL) {
 		std::cout << "can not open external file " << fileName << std::endl;
 		return false;
@@ -348,11 +353,11 @@ bool Store::loadExternal(const std::string & fileName)
 			fscanf(fp, "%f %f %fn", &vx, &vy, &vz);
 			this->vertices.push_back(glm::vec3(vx, vy, vz));
 			this->normals.push_back(glm::vec3(0, 0, 0));
-			this->textures.push_back(glm::ivec3(0, 0, 0));
+			this->textures.push_back(glm::vec3(0, 0, 0));
 		}
 		else if (strcmp(lineHeader, "f") == 0) {
 			fscanf(fp, "%d %d %dn", &ev1, &ev2, &ev3);
-			this->elements.push_back(glm::uvec3(ev1, ev2, ev3));
+			this->elements.push_back(glm::uvec3(ev1-1, ev2-1, ev3-1));
 		}
 		else {
 			// ignore blank line and # comment line
@@ -365,7 +370,9 @@ bool Store::loadExternal(const std::string & fileName)
 
 bool Store::saveState(const std::string & fileName)
 {
-	FILE *fp = fopen(fileName.c_str(), "w");
+	const std::string fullName = "models/" + fileName;
+
+	FILE *fp = fopen(fullName.c_str(), "w");
 	if (fp == NULL) {
 		std::cout << "can not write to file " << fileName << std::endl;
 		return false;
@@ -383,12 +390,13 @@ bool Store::saveState(const std::string & fileName)
 
 	fprintf(fp, "# textures\n");
 	for (auto it = this->textures.begin(); it != this->textures.end(); it++) {
-		fprintf(fp, "vt %d %d %d\n", it->x, it->y, it->z);
+		fprintf(fp, "vt %f %f %f\n", it->x, it->y, it->z);
 	}
 
 	fprintf(fp, "# faces\n");
 	for (auto it = this->elements.begin(); it != this->elements.end(); it++) {
-		fprintf(fp, "f %d/%d/%d %d/%d/%d %d/%d/%d\n", it->x, it->x, it->x, it->y, it->y, it->y, it->z, it->z, it->z);
+		glm::uvec3 iit = *it + glm::uvec3(1,1,1);
+		fprintf(fp, "f %d/%d/%d %d/%d/%d %d/%d/%d\n", iit.x, iit.x, iit.x, iit.y, iit.y, iit.y, iit.z, iit.z, iit.z);
 	}
 
 	fclose(fp);

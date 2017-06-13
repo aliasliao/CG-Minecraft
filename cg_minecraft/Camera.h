@@ -38,6 +38,11 @@ public:
 		return glm::lookAt(this->position, this->position + this->frontVec, this->upVec);
 	}
 
+	glm::vec3 getPosVec()
+	{
+		return this->position;
+	}
+
 	void processKeyboard(cam direction, float deltaTime)  // deltaTime is interval between frames
 	{
 		float velocity = this->moveSpeed * deltaTime;

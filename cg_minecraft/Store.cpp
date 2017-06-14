@@ -7,11 +7,11 @@
 
 Store::Store(bool isGround)
 {
-	if (isGround) {
-		this->addGround();
-	}
 	this->isGround = isGround;
 	this->initBuffers();
+	if (isGround) {
+		this->addGround();  // !contains upload here!
+	}
 }
 
 Store::Store(const std::string &fileName, bool isExternal)
@@ -63,7 +63,8 @@ bool Store::addCube(
 
 	// texture coordinate
 	int ort[6 * 2] = {  // every face texture coordinate
-		0,0, 1,0, 1,1,  1,1, 0,1, 0,0
+		//0,0, 1,0, 1,1,  1,1, 0,1, 0,0
+		1,1, 0,1, 0,0,  0,0, 1,0, 1,1
 	};
 
 	// texture index
@@ -131,6 +132,22 @@ void Store::draw()
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, this->elementEbo);
 	glDrawElements(GL_TRIANGLES, this->elements.size(), GL_UNSIGNED_INT, 0);
 
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+	glBindVertexArray(0);
+}
+
+void Store::drawArrays()
+{
+	glBindVertexArray(this->vao);
+	glDrawArrays(GL_TRIANGLES, 0, this->vertices.size());
+	glBindVertexArray(0);
+}
+
+void Store::getBufferSize(GLenum target, GLint &n)
+{
+	glBindVertexArray(this->vao);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, this->elementEbo);
+	glGetBufferParameteriv(target, GL_BUFFER_SIZE, &n);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 	glBindVertexArray(0);
 }
@@ -323,6 +340,8 @@ bool Store::loadState(const std::string & fileName)
 		}
 	}
 
+	this->upload();
+
 	fclose(fp);
 	return true;
 }
@@ -363,6 +382,8 @@ bool Store::loadExternal(const std::string & fileName)
 			// ignore blank line and # comment line
 		}
 	}
+
+	this->upload();
 
 	fclose(fp);
 	return true;

@@ -31,68 +31,73 @@ int main()
 	Store cubeStore = Store();
 	Shader cubeShader = Shader("cube.vert", "cube.frag");
 	Shader simpleShader = Shader("simple.vert", "simple.frag");
-	Camera camera = Camera(glm::vec3(0,0,3));
+	Camera camera = Camera(glm::vec3(0,2,9));
 
-	//cubeShader.use();
-	//cubeShader.setMat4("model", glm::mat4());
-	//cubeShader.setMat4("view", camera.getViewMat());
-	//cubeShader.setMat4("projection", glm::perspective(glm::radians(75.0f), 1000.0f / 600.0f, 1.0f, 10.0f));
-	//cubeShader.setVec3("lightPos", glm::vec3(5, 5, 5));
-	//cubeShader.setVec3("viewPos", glm::vec3(camera.getPosVec()));
-	//cubeShader.setVec3("lightColor", glm::vec3(1,1,1));
-	//cubeShader.setInt("texes", 0);
+	cubeShader.use();
+	cubeShader.setMat4("model", glm::mat4());
+	cubeShader.setMat4("view", camera.getViewMat());
+	cubeShader.setMat4("projection", glm::perspective(glm::radians(75.0f), 1000.0f / 600.0f, 1.0f, 10.0f));
+	cubeShader.setVec3("lightPos", glm::vec3(5, 5, 5));
+	cubeShader.setVec3("viewPos", glm::vec3(camera.getPosVec()));
+	cubeShader.setVec3("lightColor", glm::vec3(1,1,1));
+	cubeShader.setInt("texes", 0);
 
-	simpleShader.use();
-	simpleShader.setMat4("model", glm::mat4());
-	simpleShader.setMat4("view", camera.getViewMat());
-	simpleShader.setMat4("projection", glm::perspective(glm::radians(75.0f), 1000.0f / 600.0f, 1.0f, 10.0f));
-	simpleShader.setInt("texes", 0);
+	//simpleShader.use();
+	//simpleShader.setMat4("model", glm::mat4());
+	//simpleShader.setMat4("view", camera.getViewMat());
+	//simpleShader.setMat4("projection", glm::perspective(glm::radians(75.0f), 1000.0f / 600.0f, 1.0f, 10.0f));
+	//simpleShader.setInt("texes", 0);
 
 	TEX.uploadTextures();
-	cubeStore.addCube(glm::vec3(0, 0, 0), cub::GRASS, TEX);
-	cubeStore.addCube(glm::vec3(-1, 4, -4), cub::GRASS, TEX);
+	cubeStore.addCube(glm::vec3(-4, 0, 0), cub::GRASS, TEX);
+	cubeStore.addCube(glm::vec3(2, 0, 0), cub::CRAFTING_TABLE, TEX);
+	cubeStore.addCube(glm::vec3(-2, 0, 0), cub::BRICK, TEX);
 	cubeStore.saveState("debug1.obj");
+	groudStore.saveState("debug2.obj");
 	//////////////////////////////////////////////////////////////////////////
 
 
 	glEnable(GL_DEPTH_TEST);
+	sf::Clock clock;
 	while (window.isOpen())
 	{
-		sf::Event windowEvent;
-		while (window.pollEvent(windowEvent))
+		sf::Event event;
+		float deltaTime = clock.restart().asSeconds();
+		while (window.pollEvent(event))
 		{
-			switch (windowEvent.type) {
+			switch (event.type) {
 				case sf::Event::Closed:
 					window.close();
 					break;
-				case sf::Event::MouseMoved:
-					if (sf::Mouse::isButtonPressed(sf::Mouse::Left))
-						std::cout << windowEvent.mouseMove.x << " - " << windowEvent.mouseMove.y << std::endl;
+				case sf::Event::KeyPressed:
 					break;
-				case sf::Event::MouseButtonPressed:
-					std::cout << "mouse pressed" << std::endl;
+				case sf::Event::KeyReleased:
 					break;
-				case sf::Event::MouseButtonReleased:
-					std::cout << "mouse released" << std::endl;
-					break;
-				case sf::Event::MouseWheelScrolled:
-					if (windowEvent.mouseWheelScroll.wheel == sf::Mouse::VerticalWheel)
-						std::cout << "wheel type: vertical" << std::endl;
-					else if (windowEvent.mouseWheelScroll.wheel == sf::Mouse::HorizontalWheel)
-						std::cout << "wheel type: horizontal" << std::endl;
-					else
-						std::cout << "wheel type: unknown" << std::endl;
-					std::cout << "wheel movement: " << windowEvent.mouseWheelScroll.delta << std::endl;
-					std::cout << "mouse x: " << windowEvent.mouseWheelScroll.x << std::endl;
-					std::cout << "mouse y: " << windowEvent.mouseWheelScroll.y << std::endl;
+				default:
 					break;
 			}
 		}
 
+		if (sf::Keyboard::isKeyPressed(sf::Keyboard::W))
+			camera.processKeyboard(cam::front, deltaTime);
+		if (sf::Keyboard::isKeyPressed(sf::Keyboard::S))
+			camera.processKeyboard(cam::back, deltaTime);
+		if (sf::Keyboard::isKeyPressed(sf::Keyboard::A))
+			camera.processKeyboard(cam::left, deltaTime);
+		if (sf::Keyboard::isKeyPressed(sf::Keyboard::D))
+			camera.processKeyboard(cam::right, deltaTime);
+
 		glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-		groudStore.draw();
-		cubeStore.draw();
+		cubeStore.drawArrays();
+		groudStore.drawArrays();
+
+		cubeShader.setMat4("model", glm::mat4());
+		cubeShader.setMat4("view", camera.getViewMat());
+		cubeShader.setMat4("projection", glm::perspective(glm::radians(camera.getZoom()), 1000.0f / 600.0f, 1.0f, 10.0f));
+		cubeShader.setVec3("lightPos", glm::vec3(5, 5, 5));
+		cubeShader.setVec3("viewPos", glm::vec3(camera.getPosVec()));
+		cubeShader.setVec3("lightColor", glm::vec3(1, 1, 1));
 
 		window.display();
 	}

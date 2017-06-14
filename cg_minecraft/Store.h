@@ -31,4 +31,6 @@ public:
 	bool addCube(const glm::ivec3 &position, const cub type, Texture &TEX);
 	bool removeCube(const glm::ivec3 &position);
 	void draw();
+	void drawArrays();
+	void getBufferSize(GLenum target, GLint &n);
 };

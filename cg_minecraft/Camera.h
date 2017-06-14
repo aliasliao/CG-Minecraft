@@ -16,6 +16,12 @@ class Camera
 	float moveSpeed;
 	float mouseSensitivity;
 	float zoom;
+	float zoomSpeed;
+
+	glm::vec3 getMoveTuple()
+	{
+		return glm::normalize(glm::vec3(this->frontVec.x, 0, this->frontVec.z));
+	}
 
 public:
 	Camera(const glm::vec3 &position = glm::vec3(0, 0, 0))
@@ -29,8 +35,9 @@ public:
 		this->yaw = -90.0f;
 		this->pitch = 0.0f;
 		this->moveSpeed = 5.0f;
-		this->mouseSensitivity = 0.1f;
+		this->mouseSensitivity = 0.3f;
 		this->zoom = 45.0f;
+		this->zoomSpeed = 10.0f;
 	}
 
 	glm::mat4 getViewMat()
@@ -48,16 +55,18 @@ public:
 		return this->zoom;
 	}
 
-	void processKeyboard(cam direction, float deltaTime)  // deltaTime is interval between frames
+	void processKeyboard(cam action, float deltaTime)  // deltaTime is interval between frames
 	{
 		float velocity = this->moveSpeed * deltaTime;
-		switch (direction)
+		glm::vec3 moveTuple = this->getMoveTuple();
+
+		switch (action)
 		{
 			case cam::front:
-				this->position += this->frontVec * velocity;
+				this->position += moveTuple * velocity;
 				break;
 			case cam::back:
-				this->position -= this->frontVec * velocity;
+				this->position -= moveTuple * velocity;
 				break;
 			case cam::left:
 				this->position -= this->rightVec * velocity;
@@ -65,15 +74,24 @@ public:
 			case cam::right:
 				this->position += this->rightVec * velocity;
 				break;
+			case cam::zoomIn:
+				this->zoom += this->zoomSpeed * deltaTime;
+				break;
+			case cam::zoomOut:
+				this->zoom -= this->zoomSpeed * deltaTime;
+				break;
+			case cam::reset:
+				this->zoom = 45.0f;
+				break;
 			default:
 				break;
 		}
 	}
 
-	void processMouseMove(float xoffset, float yoffset)
+	void processMouseMove(const glm::ivec2 &offset)
 	{
-		this->yaw += xoffset * this->mouseSensitivity;
-		this->pitch += yoffset * this->mouseSensitivity;
+		this->yaw += offset.x * this->mouseSensitivity;
+		this->pitch -= offset.y * this->mouseSensitivity;  // when mouse up, offset.y<0
 
 		if (this->pitch > 89.0f) {
 			this->pitch = 89.0f;

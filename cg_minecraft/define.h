@@ -4,7 +4,8 @@ enum class cub
 {
 	DIRT, GRASS, BRICK, STONE,
 	BED_HEAD, BED_FEET,
-	CRAFTING_TABLE, ROSE
+	CRAFTING_TABLE, ROSE,
+	LAST
 };
 enum class dir  // cube to human
 {
@@ -12,5 +13,5 @@ enum class dir  // cube to human
 };
 enum class cam
 {
-	front, back, left, right
+	front, back, left, right, zoomIn, zoomOut, reset
 };

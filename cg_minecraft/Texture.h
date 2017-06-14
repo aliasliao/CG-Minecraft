@@ -18,9 +18,11 @@ class Texture
 
 	void fillFiles();
 	void fillTex();
+	void fillCubeName();
 	std::map<dir, int> genCube(int f, int b, int l, int r, int u, int bo);
 
 public:
+	std::map<cub, std::string> cubName;
 	std::map<cub, std::map<dir, int> > tex;
 
 	Texture();

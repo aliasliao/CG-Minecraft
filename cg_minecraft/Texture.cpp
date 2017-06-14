@@ -5,12 +5,12 @@
 Texture::Texture()
 {
 	this->fillTex();
+	this->fillFiles();
+	this->fillCubeName();
 }
 
 void Texture::uploadTextures()
 {
-	this->fillFiles();
-
 	GLuint texture;
 	GLsizei width = 16;
 	GLsizei height = 16;
@@ -82,4 +82,16 @@ void Texture::fillTex()
 	this->tex[cub::BED_FEET		 	] = this->genCube(10,  1, 11, 11, 12, 12);
 	this->tex[cub::CRAFTING_TABLE	] = this->genCube( 7,  7,  8,  8,  9,  9);
 	this->tex[cub::ROSE			 	] = this->genCube(16, 16, 16, 16,  1,  1);
+}
+
+void Texture::fillCubeName()
+{
+	this->cubName[cub::DIRT				] = "dirt";
+	this->cubName[cub::GRASS		 	] = "grass";
+	this->cubName[cub::BRICK		 	] = "brick";
+	this->cubName[cub::STONE		 	] = "stone";
+	this->cubName[cub::BED_HEAD		 	] = "bed(from head)";
+	this->cubName[cub::BED_FEET		 	] = "bed(from feet)";
+	this->cubName[cub::CRAFTING_TABLE	] = "crafting table";
+	this->cubName[cub::ROSE			 	] = "rose";
 }

@@ -86,7 +86,12 @@ int main()
 					break;
 				case sf::Event::MouseMoved:
 					newPos = glm::ivec2(event.mouseMove.x, event.mouseMove.y);
-					camera.processMouseMove(newPos - oldPos);
+
+					if (newPos.x <= 0 || newPos.x >= winWidth - 1 || newPos.y <= 0 || newPos.y >= winHeight - 1)
+						sf::Mouse::setPosition(sf::Vector2i(winWidth / 2, winHeight / 2), window);
+					if (newPos != glm::ivec2(winWidth / 2, winHeight / 2))
+						camera.processMouseMove(newPos - oldPos);
+
 					oldPos = newPos;
 					break;
 				case sf::Event::MouseButtonPressed:
@@ -126,7 +131,7 @@ int main()
 
 		cubeShader.setMat4("model", glm::mat4());
 		cubeShader.setMat4("view", camera.getViewMat());
-		cubeShader.setMat4("projection", glm::perspective(glm::radians(camera.getZoom()), (float)winWidth/(float)winHeight, 1.0f, 100.0f));
+		cubeShader.setMat4("projection", glm::perspective(glm::radians(camera.getZoom()), (float)winWidth/(float)winHeight, 0.1f, 100.0f));
 		cubeShader.setVec3("lightPos", glm::vec3(5, 5, 5));
 		cubeShader.setVec3("viewPos", glm::vec3(camera.getPosVec()));
 		cubeShader.setVec3("lightColor", glm::vec3(1, 1, 1));
@@ -134,9 +139,10 @@ int main()
 		///////
 		glUseProgram(text.program);
 
-		FT_Set_Pixel_Sizes(text.face, 0, 24);
+		FT_Set_Pixel_Sizes(text.face, 0, 48);
 		glUniform4fv(text.uniform_color, 1, red);
-		text.render_text("+", -1 + 493 * sx, 1 - 308 * sy, sx, sy);
+		text.render_text("+", -1 + 488 * sx, 1 - 319 * sy, sx, sy);
+		FT_Set_Pixel_Sizes(text.face, 0, 24);
 		glUniform4fv(text.uniform_color, 1, white);
 		text.render_text(TEX.cubName[currentCube].c_str(), -1 + 8 * sx, 1 - 580 * sy, sx, sy);
 

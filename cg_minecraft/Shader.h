@@ -91,6 +91,11 @@ public:
 		glDeleteShader(fragShader);
 	}
 
+	GLuint getProgram()
+	{
+		return this->program;
+	}
+
 	// activate the shader
 	// ------------------------------------------------------------------------
 	void use()

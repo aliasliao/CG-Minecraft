@@ -11,6 +11,7 @@
 #include "Store.h"
 #include "Shader.h"
 #include "Camera.h"
+#include "Text.h"
 
 
 const int winWidth = 1000;
@@ -35,6 +36,7 @@ int main()
 	Shader cubeShader = Shader("cube.vert", "cube.frag");
 	Shader simpleShader = Shader("simple.vert", "simple.frag");
 	Camera camera = Camera(glm::vec3(0,2,9));
+	Text text;
 
 	cubeShader.use();
 	cubeShader.setInt("texes", 0);
@@ -45,18 +47,26 @@ int main()
 	cubeStore.addCube(glm::vec3(-2, 0, 0), cub::BRICK, TEX);
 	cubeStore.saveState("debug1.obj");
 	groudStore.saveState("debug2.obj");
+	text.init_resources();
 	//////////////////////////////////////////////////////////////////////////
 
 
 	glEnable(GL_DEPTH_TEST);
+	glEnable(GL_BLEND);
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
 	sf::Clock clock;
 	glm::ivec2 oldPos, newPos;
 	cub currentCube = static_cast<cub>(0);
 	int cubeTotal = static_cast<int>(cub::LAST);
 	int curInd;
+	float sx = 2.0f / (float)winWidth;
+	float sy = 2.0f / (float)winHeight;
+	GLfloat red[4] = { 1, 0, 0, 1 };
+	GLfloat white[4] = { 1, 1, 1, 1 };
 
 	// center mouse, set oldPos
-	sf::Mouse::setPosition(sf::Vector2i(winHeight / 2, winWidth / 2), window);
+	sf::Mouse::setPosition(sf::Vector2i(winWidth/2, winHeight/2), window);
 	sf::Vector2i tmp = sf::Mouse::getPosition(window);
 	oldPos = glm::ivec2(tmp.x, tmp.y);
 
@@ -78,6 +88,9 @@ int main()
 					newPos = glm::ivec2(event.mouseMove.x, event.mouseMove.y);
 					camera.processMouseMove(newPos - oldPos);
 					oldPos = newPos;
+					break;
+				case sf::Event::MouseButtonPressed:
+					std::cout << "clicked" << event.mouseButton.x << "**" << event.mouseButton.y << std::endl;
 					break;
 				case sf::Event::MouseWheelScrolled:
 					curInd = static_cast<int>(currentCube);
@@ -118,6 +131,17 @@ int main()
 		cubeShader.setVec3("viewPos", glm::vec3(camera.getPosVec()));
 		cubeShader.setVec3("lightColor", glm::vec3(1, 1, 1));
 
+		///////
+		glUseProgram(text.program);
+
+		FT_Set_Pixel_Sizes(text.face, 0, 24);
+		glUniform4fv(text.uniform_color, 1, red);
+		text.render_text("+", -1 + 493 * sx, 1 - 308 * sy, sx, sy);
+		glUniform4fv(text.uniform_color, 1, white);
+		text.render_text(TEX.cubName[currentCube].c_str(), -1 + 8 * sx, 1 - 580 * sy, sx, sy);
+
+		cubeShader.use();
+		///////
 
 		window.display();
 	}

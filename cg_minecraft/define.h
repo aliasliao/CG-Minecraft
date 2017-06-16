@@ -13,5 +13,6 @@ enum class dir  // cube to human
 };
 enum class cam
 {
-	front, back, left, right, zoomIn, zoomOut, reset
+	front, back, left, right, up, down,
+	zoomIn, zoomOut, reset
 };

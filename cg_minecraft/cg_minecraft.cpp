@@ -19,6 +19,7 @@ const int winWidth = 1000;
 const int winHeight = 600;
 const int xCenter = winWidth / 2;
 const int yCenter = winHeight / 2;
+const float aspect = (float)winWidth / (float)winHeight;
 
 glm::vec3 getCursorCubePos(const glm::vec3 &objcoord, const glm::vec3 &cameraPos);  // for removeCube
 glm::vec3 getNextCubePos(const glm::vec3 &objcoord, const glm::vec3 &cameraPos);  // for addCube
@@ -41,7 +42,7 @@ int main()
 	Store cubeStore = Store();
 	Shader cubeShader = Shader("cube.vert", "cube.frag");
 	Shader simpleShader = Shader("simple.vert", "simple.frag");
-	Camera camera = Camera(glm::vec3(0,2,9));
+	Camera camera = Camera();
 	Text text;
 
 	cubeShader.use();
@@ -77,7 +78,6 @@ int main()
 	// initial STATIC mats
 	glm::vec4 viewport = glm::vec4(0, 0, winWidth, winHeight);
 	glm::mat4 model = glm::mat4();
-	glm::mat4 projection = glm::perspective(glm::radians(camera.getZoom()), (float)winWidth / (float)winHeight, 0.1f, 100.0f);
 	glm::vec3 lightPos = glm::vec3(5, 5, 5);
 	glm::vec3 lightColor = glm::vec3(1, 1, 1);
 
@@ -116,7 +116,7 @@ int main()
 				case sf::Event::MouseButtonPressed:
 					glReadPixels(xCenter, winHeight - yCenter - 1, 1, 1, GL_DEPTH_COMPONENT, GL_FLOAT, &depth);
 					wincoord = glm::vec3(xCenter, winHeight - yCenter - 1, depth);
-					objcoord = glm::unProject(wincoord, camera.getViewMat(), projection, viewport);
+					objcoord = glm::unProject(wincoord, camera.getViewMat(), camera.getProjMat(aspect), viewport);
 					if (event.mouseButton.button == sf::Mouse::Left) {
 						cubeStore.addCube(
 							getNextCubePos(objcoord, camera.getPosVec()), currentCube, TEX
@@ -152,6 +152,10 @@ int main()
 			camera.processKeyboard(cam::left, deltaTime);
 		if (sf::Keyboard::isKeyPressed(sf::Keyboard::D))
 			camera.processKeyboard(cam::right, deltaTime);
+		if (sf::Keyboard::isKeyPressed(sf::Keyboard::Q))
+			camera.processKeyboard(cam::up, deltaTime);
+		if (sf::Keyboard::isKeyPressed(sf::Keyboard::E))
+			camera.processKeyboard(cam::down, deltaTime);
 		if (sf::Keyboard::isKeyPressed(sf::Keyboard::Z))
 			camera.processKeyboard(cam::zoomIn, deltaTime);
 		if (sf::Keyboard::isKeyPressed(sf::Keyboard::C))
@@ -160,13 +164,14 @@ int main()
 			camera.processKeyboard(cam::reset, deltaTime);
 
 		glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+		//glClearColor(153.0f/255.0f, 204.0f/255.0f, 255.0f/255.0f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 		cubeStore.drawArrays();
 		groudStore.drawArrays();
 
 		cubeShader.setMat4("model", model);
 		cubeShader.setMat4("view", camera.getViewMat());
-		cubeShader.setMat4("projection", projection);
+		cubeShader.setMat4("projection", camera.getProjMat(aspect));
 		cubeShader.setVec3("lightPos", lightPos);
 		cubeShader.setVec3("viewPos", camera.getPosVec());
 		cubeShader.setVec3("lightColor", lightColor);

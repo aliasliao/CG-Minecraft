@@ -14,10 +14,13 @@ uniform sampler2DArray texes;
 void main()
 {
 	// texture color
-	vec3 objectColor = vec3(texture(texes, TextureVec));
+	vec4 objRGBA = texture(texes, TextureVec);
+	if (objRGBA.a == 0.0f)
+		discard;
+	vec3 objectColor = vec3(objRGBA);
 
 	// ambient
-    float ambientStrength = 0.1;
+    float ambientStrength = 0.5;
     vec3 ambient = ambientStrength * lightColor;
   	
     // diffuse 

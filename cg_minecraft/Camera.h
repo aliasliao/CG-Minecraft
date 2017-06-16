@@ -2,6 +2,7 @@
 
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
+#include <iostream>
 #include "define.h"
 
 class Camera
@@ -24,7 +25,7 @@ class Camera
 	}
 
 public:
-	Camera(const glm::vec3 &position = glm::vec3(0, 0, 0))
+	Camera(const glm::vec3 &position = glm::vec3(0, 3, 5))  // eye is 3 tall
 	{
 		this->position = position;
 		this->frontVec = glm::vec3(0, 0, -1);
@@ -43,6 +44,11 @@ public:
 	glm::mat4 getViewMat()
 	{
 		return glm::lookAt(this->position, this->position + this->frontVec, this->upVec);
+	}
+
+	glm::mat4 getProjMat(float aspect)
+	{
+		return glm::perspective(glm::radians(this->zoom), aspect, 0.1f, 100.0f);
 	}
 
 	glm::vec3 getPosVec()
@@ -74,6 +80,13 @@ public:
 			case cam::right:
 				this->position += this->rightVec * velocity;
 				break;
+			case cam::up:
+				this->position += this->worldUpVec * velocity;
+				break;
+			case cam::down:
+				if (this->position.y > 3)
+					this->position -= this->worldUpVec * velocity;
+				break;
 			case cam::zoomIn:
 				this->zoom += this->zoomSpeed * deltaTime;
 				break;
@@ -82,8 +95,10 @@ public:
 				break;
 			case cam::reset:
 				this->zoom = 45.0f;
+				this->position.y = 3;
 				break;
 			default:
+				std::cout << "undefined key pressed" << std::endl;
 				break;
 		}
 	}

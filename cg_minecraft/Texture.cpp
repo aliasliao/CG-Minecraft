@@ -72,14 +72,14 @@ void Texture::fillFiles()
 	};
 }
 
-void Texture::fillTex()
+void Texture::fillTex()  // front, back, left, right, up, bottom
 {
 	this->tex[cub::DIRT				] = this->genCube( 3,  3,  3,  3,  3,  3);
 	this->tex[cub::GRASS		 	] = this->genCube( 4,  4,  4,  4,  2,  3);
 	this->tex[cub::BRICK		 	] = this->genCube( 5,  5,  5,  5,  5,  5);
 	this->tex[cub::STONE		 	] = this->genCube( 6,  6,  6,  6,  6,  6);
-	this->tex[cub::BED_HEAD		 	] = this->genCube( 1, 13, 14, 14, 15, 15);
-	this->tex[cub::BED_FEET		 	] = this->genCube(10,  1, 11, 11, 12, 12);
+	this->tex[cub::BED_HEAD		 	] = this->genCube( 1, 13, 14, 14, 15,  1);
+	this->tex[cub::BED_FEET		 	] = this->genCube(10,  1, 11, 11, 12,  1);
 	this->tex[cub::CRAFTING_TABLE	] = this->genCube( 7,  7,  8,  8,  9,  9);
 	this->tex[cub::ROSE			 	] = this->genCube(16, 16, 16, 16,  1,  1);
 }

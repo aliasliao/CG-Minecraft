@@ -35,7 +35,7 @@ public:
 		this->yaw = -90.0f;
 		this->pitch = 0.0f;
 		this->moveSpeed = 5.0f;
-		this->mouseSensitivity = 0.3f;
+		this->mouseSensitivity = 0.2f;
 		this->zoom = 45.0f;
 		this->zoomSpeed = 10.0f;
 	}

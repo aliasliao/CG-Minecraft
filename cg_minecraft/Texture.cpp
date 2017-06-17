@@ -69,6 +69,10 @@ void Texture::fillFiles()
 		/*14*/"bed_head_side.png",
 		/*15*/"bed_head_top.png",
 		/*16*/"flower_rose.png",
+		/*17*/"custom_face1.png",
+		/*18*/"custom_face2.png",
+		/*19*/"custom_face3.png",
+		/*20*/"custom_face4.png",
 	};
 }
 
@@ -82,6 +86,7 @@ void Texture::fillTex()  // front, back, left, right, up, bottom
 	this->tex[cub::BED_FEET		 	] = this->genCube(10,  1, 11, 11, 12,  1);
 	this->tex[cub::CRAFTING_TABLE	] = this->genCube( 7,  7,  8,  8,  9,  9);
 	this->tex[cub::ROSE			 	] = this->genCube(16, 16, 16, 16,  1,  1);
+	this->tex[cub::FACE			 	] = this->genCube(17, 20, 18, 18, 19,  1);
 }
 
 void Texture::fillCubeName()
@@ -94,4 +99,5 @@ void Texture::fillCubeName()
 	this->cubName[cub::BED_FEET		 	] = "bed(from feet)";
 	this->cubName[cub::CRAFTING_TABLE	] = "crafting table";
 	this->cubName[cub::ROSE			 	] = "rose";
+	this->cubName[cub::FACE			 	] = "face";
 }

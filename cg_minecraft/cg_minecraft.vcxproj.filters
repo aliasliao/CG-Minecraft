@@ -66,4 +66,21 @@
     <None Include="shaders\simple.vert" />
     <None Include="shaders\simple.frag" />
   </ItemGroup>
+  <ItemGroup>
+    <Image Include="textures\blocks\custom_test.PNG">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="textures\blocks\custom_face2.PNG">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="textures\blocks\custom_face3.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="textures\blocks\custom_face4.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="textures\blocks\custom_face5.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+  </ItemGroup>
 </Project>

@@ -4,7 +4,7 @@ enum class cub
 {
 	DIRT, GRASS, BRICK, STONE,
 	BED_HEAD, BED_FEET,
-	CRAFTING_TABLE, ROSE,
+	CRAFTING_TABLE, ROSE, FACE,
 	LAST
 };
 enum class dir  // cube to human

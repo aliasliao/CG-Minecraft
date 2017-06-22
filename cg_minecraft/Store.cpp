@@ -1,5 +1,7 @@
 #include "stdafx.h"
 #include <string>
+#include <fstream>
+#include <sstream>
 #include <cstdlib>
 #include "Store.h"
 #include "Texture.h"
@@ -140,9 +142,20 @@ bool Store::removeCube(const glm::ivec3 & position)
 void Store::draw()
 {
 	glBindVertexArray(this->vao);
+	glBindBuffer(GL_ARRAY_BUFFER, this->vertexVbo);
+	glEnableVertexAttribArray(0);
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, 0);
+	glBindBuffer(GL_ARRAY_BUFFER, this->normalVbo);
+	glEnableVertexAttribArray(1);
+	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 0, 0);
+	glBindBuffer(GL_ARRAY_BUFFER, this->textureVbo);
+	glEnableVertexAttribArray(2);
+	glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, 0, 0);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, this->elementEbo);
+
 	glDrawElements(GL_TRIANGLES, this->elements.size(), GL_UNSIGNED_INT, 0);
 
+	glBindBuffer(GL_ARRAY_BUFFER, 0);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 	glBindVertexArray(0);
 }
@@ -376,64 +389,40 @@ bool Store::loadState(const std::string & fileName)
 bool Store::loadExternal(const std::string & fileName, const glm::ivec3 & position)
 {
 	const std::string fullName = "models/" + fileName;
+	int elementOffset = this->vertices.size() - 1;
 
-	FILE *fp = fopen(fullName.c_str(), "r");
-	if (fp == NULL) {
-		std::cout << "can not open external file " << fileName << std::endl;
+	std::ifstream in(fullName);
+	if (!in) {
+		std::cerr << "can't open file" << fileName << std::endl;
 		return false;
 	}
 
-	char lineHeader[128];
 	float vx, vy, vz;
 	float nx, ny, nz;
-	int ev1, ev2, ev3, tmp;
+	unsigned int ev1, ev2, ev3;
 
-	bool isKnown = false;
-	bool has3;
-
-	while (true) {
-		int size = fscanf(fp, "%s", lineHeader);
-		if (size == EOF) {
-			break;
-		}
-
-		if (strcmp(lineHeader, "v") == 0) {
-			fscanf(fp, "%f %f %fn", &vx, &vy, &vz);
-			this->vertices.push_back(glm::vec3(vx+position.x, vy+position.y, vz+position.z));
+	std::string line;
+	while (std::getline(in, line)) {
+		if (line.substr(0, 2) == "v ") {
+			std::istringstream s(line.substr(2));
+			s >> vx; s >> vy; s >> vz;
+			this->vertices.push_back(glm::vec3(vx + position.x, vy + position.y, vz + position.z));
 			this->textures.push_back(glm::vec3(0, 0, 0));
 		}
-		else if (strcmp(lineHeader, "vn") == 0) {
-			fscanf(fp, "%f %f %fn", &nx, &ny, &nz);
+		else if (line.substr(0, 2) == "vn") {
+			std::istringstream s(line.substr(2));
+			s >> nx; s >> ny; s >> nz;
 			this->normals.push_back(glm::vec3(nx, ny, nz));
 		}
-		else if (strcmp(lineHeader, "f") == 0) {
-			if (!isKnown) {
-				char tmpStr[32];
-				long savePos = ftell(fp);
-				//fscanf(fp, "%d", &tmp);
-				fscanf(fp, "%s", tmpStr);
-				if (tmpStr[2] == '/')
-					has3 = false;
-				else
-					has3 = true;
-				fseek(fp, savePos, SEEK_SET);
-				isKnown = true;
-			}
-
-			if (!has3)
-				fscanf(fp, "%d//%d %d//%d %d//%dn", &ev1, &tmp, &ev2, &tmp, &ev3, &tmp);
-			else
-				fscanf(fp, "%d/%d/%d %d/%d/%d %d/%d/%dn", &ev1, &tmp, &tmp, &ev2, &tmp, &tmp, &ev3, &tmp, &tmp);
-			this->elements.push_back(glm::uvec3(ev1-1, ev2-1, ev3-1));
-		}
-		else {
-			// ignore blank line and # comment line
+		else if (line.substr(0, 2) == "f ") {
+			std::istringstream s(line.substr(2));
+			s >> ev1; s.ignore(128, ' '); s >> ev2; s.ignore(128, ' '); s >> ev3;
+			this->elements.push_back(glm::ivec3(ev1 + elementOffset, ev2 + elementOffset, ev3 + elementOffset));
 		}
 	}
 
 	this->upload();
 
-	fclose(fp);
 	return true;
 }
 

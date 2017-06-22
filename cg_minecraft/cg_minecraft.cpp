@@ -201,8 +201,8 @@ int main()
 		//glClearColor(153.0f/255.0f, 204.0f/255.0f, 255.0f/255.0f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 		cubeStore.drawArrays();
-		//externalStore.drawArrays();
-		externalStore.draw();
+		externalStore.drawArrays();
+		//externalStore.draw();
 		groudStore.drawArrays();
 
 		cubeShader.setMat4("model", model);

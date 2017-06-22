@@ -15,9 +15,14 @@ void main()
 {
 	// texture color
 	vec4 objRGBA = texture(texes, TextureVec);
-	if (objRGBA.a == 0.0f)
+	if (objRGBA.a == 0.0f)  // handle transparent
 		discard;
 	vec3 objectColor = vec3(objRGBA);
+
+	/*
+	if (TextureVec.z == 0.0f)  // external model
+		objectColor = vec3(1.0f, 1.0f, 1.0f);
+	*/
 
 	// ambient
     float ambientStrength = 0.5;

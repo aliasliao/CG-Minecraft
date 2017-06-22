@@ -21,14 +21,15 @@ class Store {
 	bool addGround();
 	void upload();  // upload buffer to gpu
 	int getCubeIndex(const glm::ivec3 &position);  // 0 for ground
-	bool loadState(const std::string &fileName);
-	bool loadExternal(const std::string &fileName);
+	bool loadExternal(const std::string &fileName, const glm::ivec3 &position);
 	
 public:
 	Store(bool isGround=false);  // whether the store is a ground
 	Store(const std::string &fileName, bool isExternal=false);  // load from file, all file has no ground
+	bool loadState(const std::string &fileName);
 	bool saveState(const std::string &fileName);  // save to file
 	bool addCube(const glm::ivec3 &position, const cub type, Texture &TEX);
+	bool addExternalModel(const glm::ivec3 &position, const cub type, Texture &TEX);
 	bool removeCube(const glm::ivec3 &position);
 	void draw();
 	void drawArrays();

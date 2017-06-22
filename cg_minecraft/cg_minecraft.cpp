@@ -8,6 +8,7 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <iostream>
 #include <cstdio>
+#include <ctime>
 #include "Texture.h"
 #include "Store.h"
 #include "Shader.h"
@@ -17,12 +18,15 @@
 
 const int winWidth = 1000;
 const int winHeight = 600;
+const int winPosX = 300;
+const int winPosY = 50;
 const int xCenter = winWidth / 2;
 const int yCenter = winHeight / 2;
 const float aspect = (float)winWidth / (float)winHeight;
 
 glm::vec3 getCursorCubePos(const glm::vec3 &objcoord, const glm::vec3 &cameraPos);  // for removeCube
 glm::vec3 getNextCubePos(const glm::vec3 &objcoord, const glm::vec3 &cameraPos);  // for addCube
+std::string getCurTimeStr();
 
 int main()
 {
@@ -32,6 +36,7 @@ int main()
 	sf::Window window(sf::VideoMode(winWidth, winHeight), "Minecraft", sf::Style::Titlebar | sf::Style::Close, settings);
 	window.setMouseCursorVisible(false);
 	window.setMouseCursorGrabbed(true);
+	window.setPosition(sf::Vector2i(winPosX, winPosY));
 
 	glewExperimental = GL_TRUE;
 	glewInit();
@@ -40,6 +45,7 @@ int main()
 	Texture TEX = Texture();
 	Store groudStore = Store(true);
 	Store cubeStore = Store();
+	Store externalStore = Store();
 	Shader cubeShader = Shader("cube.vert", "cube.frag");
 	Shader simpleShader = Shader("simple.vert", "simple.frag");
 	Camera camera = Camera();
@@ -49,11 +55,7 @@ int main()
 	cubeShader.setInt("texes", 0);
 
 	TEX.uploadTextures();
-	cubeStore.addCube(glm::vec3(-4, 0, 0), cub::GRASS, TEX);
-	cubeStore.addCube(glm::vec3(2, 0, 0), cub::CRAFTING_TABLE, TEX);
-	cubeStore.addCube(glm::vec3(-2, 0, 0), cub::BRICK, TEX);
-	cubeStore.saveState("debug1.obj");
-	groudStore.saveState("debug2.obj");
+	cubeStore.addCube(glm::vec3(0, 0, 0), cub::CRAFTING_TABLE, TEX);
 	text.init_resources();
 	//////////////////////////////////////////////////////////////////////////
 
@@ -80,6 +82,8 @@ int main()
 	glm::mat4 model = glm::mat4();
 	glm::vec3 lightPos = glm::vec3(5, 5, 5);
 	glm::vec3 lightColor = glm::vec3(1, 1, 1);
+	// control key
+	bool lControl = false;
 
 	// center mouse, set oldPos
 	sf::Mouse::setPosition(sf::Vector2i(xCenter, yCenter), window);
@@ -100,6 +104,28 @@ int main()
 				case sf::Event::KeyPressed:
 					if (event.key.code == sf::Keyboard::Escape)
 						window.close();
+					if (event.key.code == sf::Keyboard::LControl)
+						lControl = true;
+					if (lControl && event.key.code == sf::Keyboard::S) {
+						std::string fname = getCurTimeStr() + ".obj";
+						cubeStore.saveState(fname);
+						std::cout << "current state saved to file " << fname << std::endl;
+					}
+					if (lControl && event.key.code == sf::Keyboard::L) {
+						std::string fname = "2017_5_22_12_45_17.obj";
+						cubeStore.loadState(fname);
+						std::cout << "current state loaded from file " << fname << std::endl;
+					}
+					if (lControl && event.key.code == sf::Keyboard::E) {
+						std::string fname = "teapot.obj";
+						//cubeStore.loadState(fname);
+						std::cout << "external model loaded from file " << fname << std::endl;
+					}
+					break;
+
+				case sf::Event::KeyReleased:
+					if (event.key.code == sf::Keyboard::LControl)
+						lControl = false;
 					break;
 
 				case sf::Event::MouseMoved:
@@ -118,9 +144,14 @@ int main()
 					wincoord = glm::vec3(xCenter, winHeight - yCenter - 1, depth);
 					objcoord = glm::unProject(wincoord, camera.getViewMat(), camera.getProjMat(aspect), viewport);
 					if (event.mouseButton.button == sf::Mouse::Left) {
-						cubeStore.addCube(
-							getNextCubePos(objcoord, camera.getPosVec()), currentCube, TEX
-						);
+						if (! isExtModel(currentCube))
+							cubeStore.addCube(
+								getNextCubePos(objcoord, camera.getPosVec()), currentCube, TEX
+							);
+						else
+							externalStore.addCube(
+								getNextCubePos(objcoord, camera.getPosVec()), currentCube, TEX
+							);
 					}
 					else if (event.mouseButton.button == sf::Mouse::Right) {
 						cubeStore.removeCube(
@@ -144,29 +175,34 @@ int main()
 			}
 		}
 
-		if (sf::Keyboard::isKeyPressed(sf::Keyboard::W))
-			camera.processKeyboard(cam::front, deltaTime);
-		if (sf::Keyboard::isKeyPressed(sf::Keyboard::S))
-			camera.processKeyboard(cam::back, deltaTime);
-		if (sf::Keyboard::isKeyPressed(sf::Keyboard::A))
-			camera.processKeyboard(cam::left, deltaTime);
-		if (sf::Keyboard::isKeyPressed(sf::Keyboard::D))
-			camera.processKeyboard(cam::right, deltaTime);
-		if (sf::Keyboard::isKeyPressed(sf::Keyboard::Q))
-			camera.processKeyboard(cam::up, deltaTime);
-		if (sf::Keyboard::isKeyPressed(sf::Keyboard::E))
-			camera.processKeyboard(cam::down, deltaTime);
-		if (sf::Keyboard::isKeyPressed(sf::Keyboard::Z))
-			camera.processKeyboard(cam::zoomIn, deltaTime);
-		if (sf::Keyboard::isKeyPressed(sf::Keyboard::C))
-			camera.processKeyboard(cam::zoomOut, deltaTime);
-		if (sf::Keyboard::isKeyPressed(sf::Keyboard::Space))
-			camera.processKeyboard(cam::reset, deltaTime);
+		if (! lControl)
+		{
+			if (sf::Keyboard::isKeyPressed(sf::Keyboard::W))
+				camera.processKeyboard(cam::front, deltaTime);
+			if (sf::Keyboard::isKeyPressed(sf::Keyboard::S))
+				camera.processKeyboard(cam::back, deltaTime);
+			if (sf::Keyboard::isKeyPressed(sf::Keyboard::A))
+				camera.processKeyboard(cam::left, deltaTime);
+			if (sf::Keyboard::isKeyPressed(sf::Keyboard::D))
+				camera.processKeyboard(cam::right, deltaTime);
+			if (sf::Keyboard::isKeyPressed(sf::Keyboard::Q))
+				camera.processKeyboard(cam::up, deltaTime);
+			if (sf::Keyboard::isKeyPressed(sf::Keyboard::E))
+				camera.processKeyboard(cam::down, deltaTime);
+			if (sf::Keyboard::isKeyPressed(sf::Keyboard::Z))
+				camera.processKeyboard(cam::zoomIn, deltaTime);
+			if (sf::Keyboard::isKeyPressed(sf::Keyboard::C))
+				camera.processKeyboard(cam::zoomOut, deltaTime);
+			if (sf::Keyboard::isKeyPressed(sf::Keyboard::Space))
+				camera.processKeyboard(cam::reset, deltaTime);
+		}
 
 		glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 		//glClearColor(153.0f/255.0f, 204.0f/255.0f, 255.0f/255.0f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 		cubeStore.drawArrays();
+		//externalStore.drawArrays();
+		externalStore.draw();
 		groudStore.drawArrays();
 
 		cubeShader.setMat4("model", model);
@@ -263,4 +299,19 @@ glm::vec3 getNextCubePos(const glm::vec3 &objcoord, const glm::vec3 &cameraPos) 
 
 	else  // not a regular cube
 		return glm::vec3(0, -1, 0);
+}
+
+std::string getCurTimeStr()
+{
+	time_t rawTime;
+	time(&rawTime);
+
+	struct tm *ti = localtime(&rawTime);
+
+	char formatStr[20];  // ****_**_**_**_**_**
+	sprintf(formatStr, "%d_%d_%d_%d_%d_%d", ti->tm_year+1900, ti->tm_mon, ti->tm_mday, ti->tm_hour, ti->tm_min, ti->tm_sec);
+
+	std::string currentTimeStr(formatStr);
+
+	return currentTimeStr;
 }

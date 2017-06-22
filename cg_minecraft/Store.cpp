@@ -1,7 +1,6 @@
 #include "stdafx.h"
 #include <string>
 #include <cstdlib>
-#include <cstring>
 #include "Store.h"
 #include "Texture.h"
 
@@ -19,7 +18,7 @@ Store::Store(const std::string &fileName, bool isExternal)
 	this->isGround = false;
 	this->initBuffers();
 	if (isExternal) {
-		this->loadExternal(fileName);
+		this->loadExternal(fileName, glm::ivec3(0, 0, 0));
 	}
 	else {
 		this->loadState(fileName);
@@ -36,6 +35,10 @@ bool Store::addCube(
 	if (this->getCubeIndex(position) >= 0) {
 		std::cout << "position has been occupied or underground" << std::endl;
 		return false;
+	}
+
+	if (isExtModel(type)) {  // for external store only
+		return this->addExternalModel(position, type, TEX);
 	}
 
 	// 6*2*3*3
@@ -63,7 +66,6 @@ bool Store::addCube(
 
 	// texture coordinate
 	int ort[6 * 2] = {  // every face texture coordinate
-		//0,0, 1,0, 1,1,  1,1, 0,1, 0,0
 		1,1, 0,1, 0,0,  0,0, 1,0, 1,1
 	};
 
@@ -97,6 +99,15 @@ bool Store::addCube(
 	this->upload();
 
 	return true;
+}
+
+// only for external store only, add/remove is forbidden
+bool Store::addExternalModel(const glm::ivec3 & position, const cub type, Texture & TEX)
+{
+	std::string fname = TEX.cubName[type] + ".obj";
+	this->loadExternal(fname, position);
+
+	return false;
 }
 
 // only called for NONE ground
@@ -321,7 +332,7 @@ bool Store::loadState(const std::string & fileName)
 		return false;
 	}
 
-	char lineHeader[8];
+	char lineHeader[128];
 	float vx, vy, vz;
 	float nx, ny, nz;
 	float tx, ty, tt;
@@ -360,9 +371,9 @@ bool Store::loadState(const std::string & fileName)
 	return true;
 }
 
-// only have v, f
+// only have v, vn, f
 // TODO: generate normals
-bool Store::loadExternal(const std::string & fileName)
+bool Store::loadExternal(const std::string & fileName, const glm::ivec3 & position)
 {
 	const std::string fullName = "models/" + fileName;
 
@@ -372,9 +383,13 @@ bool Store::loadExternal(const std::string & fileName)
 		return false;
 	}
 
-	char lineHeader[8];
+	char lineHeader[128];
 	float vx, vy, vz;
-	unsigned int ev1, ev2, ev3;
+	float nx, ny, nz;
+	int ev1, ev2, ev3, tmp;
+
+	bool isKnown = false;
+	bool has3;
 
 	while (true) {
 		int size = fscanf(fp, "%s", lineHeader);
@@ -384,12 +399,31 @@ bool Store::loadExternal(const std::string & fileName)
 
 		if (strcmp(lineHeader, "v") == 0) {
 			fscanf(fp, "%f %f %fn", &vx, &vy, &vz);
-			this->vertices.push_back(glm::vec3(vx, vy, vz));
-			this->normals.push_back(glm::vec3(0, 0, 0));
+			this->vertices.push_back(glm::vec3(vx+position.x, vy+position.y, vz+position.z));
 			this->textures.push_back(glm::vec3(0, 0, 0));
 		}
+		else if (strcmp(lineHeader, "vn") == 0) {
+			fscanf(fp, "%f %f %fn", &nx, &ny, &nz);
+			this->normals.push_back(glm::vec3(nx, ny, nz));
+		}
 		else if (strcmp(lineHeader, "f") == 0) {
-			fscanf(fp, "%d %d %dn", &ev1, &ev2, &ev3);
+			if (!isKnown) {
+				char tmpStr[32];
+				long savePos = ftell(fp);
+				//fscanf(fp, "%d", &tmp);
+				fscanf(fp, "%s", tmpStr);
+				if (tmpStr[2] == '/')
+					has3 = false;
+				else
+					has3 = true;
+				fseek(fp, savePos, SEEK_SET);
+				isKnown = true;
+			}
+
+			if (!has3)
+				fscanf(fp, "%d//%d %d//%d %d//%dn", &ev1, &tmp, &ev2, &tmp, &ev3, &tmp);
+			else
+				fscanf(fp, "%d/%d/%d %d/%d/%d %d/%d/%dn", &ev1, &tmp, &tmp, &ev2, &tmp, &tmp, &ev3, &tmp, &tmp);
 			this->elements.push_back(glm::uvec3(ev1-1, ev2-1, ev3-1));
 		}
 		else {

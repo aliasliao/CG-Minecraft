@@ -100,4 +100,9 @@ void Texture::fillCubeName()
 	this->cubName[cub::CRAFTING_TABLE	] = "crafting table";
 	this->cubName[cub::ROSE			 	] = "rose";
 	this->cubName[cub::FACE			 	] = "face";
+
+	this->cubName[cub::teapot			] = "teapot";
+	this->cubName[cub::pumpkin			] = "pumpkin";
+	this->cubName[cub::sphere			] = "sphere";
+	this->cubName[cub::cylinder			] = "cylinder";
 }

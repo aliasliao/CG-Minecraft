@@ -190,6 +190,13 @@ void Store::getBufferSize(GLenum target, GLint &n)
 	glBindVertexArray(0);
 }
 
+void Store::clear()
+{
+	this->vertices.clear();
+	this->normals.clear();
+	this->textures.clear();
+	this->elements.clear();
+}
 
 //////////////////////////////////////////////////////////////////////////
 // private functions
@@ -386,38 +393,48 @@ bool Store::loadState(const std::string & fileName)
 
 // only have v, vn, f
 // TODO: generate normals
+// TODO: can only load files that support drawArrays
 bool Store::loadExternal(const std::string & fileName, const glm::ivec3 & position)
 {
 	const std::string fullName = "models/" + fileName;
 	int elementOffset = this->vertices.size() - 1;
 
-	std::ifstream in(fullName);
-	if (!in) {
-		std::cerr << "can't open file" << fileName << std::endl;
+	FILE *fp = fopen(fullName.c_str(), "r");
+	if (fp == NULL) {
+		std::cout << "can not open external file " << fileName << std::endl;
 		return false;
 	}
 
+	char lineHeader[128];
 	float vx, vy, vz;
 	float nx, ny, nz;
-	unsigned int ev1, ev2, ev3;
+	int ev1, ev2, ev3;
 
-	std::string line;
-	while (std::getline(in, line)) {
-		if (line.substr(0, 2) == "v ") {
-			std::istringstream s(line.substr(2));
-			s >> vx; s >> vy; s >> vz;
+	while (true) {
+		int size = fscanf(fp, "%s", lineHeader);
+		if (size == EOF) {
+			break;
+		}
+
+		if (strcmp(lineHeader, "v") == 0) {
+			fscanf(fp, "%f %f %fn", &vx, &vy, &vz);
 			this->vertices.push_back(glm::vec3(vx + position.x, vy + position.y, vz + position.z));
 			this->textures.push_back(glm::vec3(0, 0, 0));
 		}
-		else if (line.substr(0, 2) == "vn") {
-			std::istringstream s(line.substr(2));
-			s >> nx; s >> ny; s >> nz;
+		else if (strcmp(lineHeader, "vn") == 0) {
+			fscanf(fp, "%f %f %fn", &nx, &ny, &nz);
 			this->normals.push_back(glm::vec3(nx, ny, nz));
 		}
-		else if (line.substr(0, 2) == "f ") {
-			std::istringstream s(line.substr(2));
-			s >> ev1; s.ignore(128, ' '); s >> ev2; s.ignore(128, ' '); s >> ev3;
-			this->elements.push_back(glm::ivec3(ev1 + elementOffset, ev2 + elementOffset, ev3 + elementOffset));
+		else if (strcmp(lineHeader, "f") == 0) {
+			//fscanf(fp, "%d//%d %d//%d %d//%dn", &ev1, &tmp, &ev2, &tmp, &ev3, &tmp);
+			//fscanf(fp, "%d/%d/%d %d/%d/%d %d/%d/%dn", &ev1, &tmp, &tmp, &ev2, &tmp, &tmp, &ev3, &tmp, &tmp);
+			fscanf(fp, "%d", &ev1); while (fgetc(fp) != ' ');
+			fscanf(fp, "%d", &ev2); while (fgetc(fp) != ' ');
+			fscanf(fp, "%d", &ev3);
+			this->elements.push_back(glm::ivec3(ev1+elementOffset, ev2+elementOffset, ev3+elementOffset));
+		}
+		else {
+			// ignore blank line and # comment line
 		}
 	}
 
@@ -432,7 +449,7 @@ bool Store::saveState(const std::string & fileName)
 
 	FILE *fp = fopen(fullName.c_str(), "w");
 	if (fp == NULL) {
-		std::cout << "can not write to file " << fileName << std::endl;
+		std::cout << "can not write to file " << fullName << std::endl;
 		return false;
 	}
 

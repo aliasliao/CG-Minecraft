@@ -46,6 +46,7 @@ int main()
 	Store groudStore = Store(true);
 	Store cubeStore = Store();
 	Store externalStore = Store();
+	Store animateStore = Store();
 	Shader cubeShader = Shader("cube.vert", "cube.frag");
 	Shader simpleShader = Shader("simple.vert", "simple.frag");
 	Camera camera = Camera();
@@ -65,6 +66,7 @@ int main()
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
 	sf::Clock clock;
+	sf::Clock animateClock;
 	glm::ivec2 oldPos, newPos;
 	cub currentCube = static_cast<cub>(0);
 	int cubeTotal = static_cast<int>(cub::LAST);
@@ -84,6 +86,9 @@ int main()
 	glm::vec3 lightColor = glm::vec3(1, 1, 1);
 	// control key
 	bool lControl = false;
+	// animate
+	int count = 1;
+	bool playAnimate = false;
 
 	// center mouse, set oldPos
 	sf::Mouse::setPosition(sf::Vector2i(xCenter, yCenter), window);
@@ -108,18 +113,28 @@ int main()
 						lControl = true;
 					if (lControl && event.key.code == sf::Keyboard::S) {
 						std::string fname = getCurTimeStr() + ".obj";
+						//std::string fname = "animate/" + std::to_string(count); count++; fname += ".obj";
 						cubeStore.saveState(fname);
 						std::cout << "current state saved to file " << fname << std::endl;
 					}
 					if (lControl && event.key.code == sf::Keyboard::L) {
-						std::string fname = "2017_5_22_12_45_17.obj";
+						std::string fname = "2017_5_23_11_15_16.obj";
 						cubeStore.loadState(fname);
 						std::cout << "current state loaded from file " << fname << std::endl;
 					}
-					if (lControl && event.key.code == sf::Keyboard::E) {
-						std::string fname = "teapot.obj";
-						//cubeStore.loadState(fname);
-						std::cout << "external model loaded from file " << fname << std::endl;
+					if (lControl && event.key.code == sf::Keyboard::C) {
+						GLbyte *pixels = (GLbyte *)malloc(4 * winWidth*winHeight * sizeof(GLbyte));
+						glReadPixels(0, 0, winWidth, winHeight, GL_RGBA, GL_UNSIGNED_BYTE, pixels);
+						sf::Image image;
+						image.create(winWidth, winHeight, (sf::Uint8*)pixels); free(pixels);
+						image.flipVertically();
+						std::string fname = "tmp/" + getCurTimeStr() + ".png";
+						image.saveToFile(fname);
+						std::cout << "capture saved to file " << fname << std::endl;
+					}
+					if (lControl && event.key.code == sf::Keyboard::P) {
+						playAnimate = !playAnimate;
+						count = 1;
 					}
 					break;
 
@@ -197,12 +212,23 @@ int main()
 				camera.processKeyboard(cam::reset, deltaTime);
 		}
 
+		sf::Time animateIInterval = animateClock.getElapsedTime();
+		if (animateIInterval.asSeconds() > 0.5f && playAnimate) {
+			animateStore.clear();
+			std::string fname = "animate/" + std::to_string(count); count++; fname += ".obj";
+			count = count > 15 ? 1 : count;
+			animateStore.loadState(fname);
+			std::cout << "load frame " << fname << std::endl;
+			animateClock.restart();
+		}
+
 		glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 		//glClearColor(153.0f/255.0f, 204.0f/255.0f, 255.0f/255.0f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 		cubeStore.drawArrays();
 		externalStore.drawArrays();
 		//externalStore.draw();
+		if (playAnimate) animateStore.drawArrays();
 		groudStore.drawArrays();
 
 		cubeShader.setMat4("model", model);

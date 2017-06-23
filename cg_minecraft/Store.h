@@ -34,4 +34,5 @@ public:
 	void draw();
 	void drawArrays();
 	void getBufferSize(GLenum target, GLint &n);
+	void clear();
 };

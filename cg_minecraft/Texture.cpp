@@ -122,6 +122,5 @@ void Texture::fillCubeName()
 
 	this->cubName[cub::teapot			 ] = "teapot";
 	this->cubName[cub::pumpkin			 ] = "pumpkin";
-	this->cubName[cub::sphere			 ] = "sphere";
-	this->cubName[cub::cylinder			 ] = "cylinder";
+	this->cubName[cub::cow				 ] = "cow";
 }

@@ -7,7 +7,7 @@ enum class cub
 	CRAFTING_TABLE, ROSE, FACE,
 	PUMPKIN_ORIGIN_OFF, PUMPKIN_ORIGIN_ON,
 	PLANK, FURNACE_OFF, FURNACE_ON,
-	teapot, pumpkin, sphere, cylinder,
+	teapot, pumpkin, cow,
 	LAST  // for iteration, cannot be removed!!!
 };
 enum class dir  // cube to human

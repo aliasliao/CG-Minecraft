@@ -44,6 +44,7 @@ int main()
 	//////////////////////////////////////////////////////////////////////////
 	Texture TEX = Texture();
 	Store groudStore = Store(true);
+	Store lightStore = Store();
 	Store cubeStore = Store();
 	Store externalStore = Store();
 	Store animateStore = Store();
@@ -57,6 +58,7 @@ int main()
 
 	TEX.uploadTextures();
 	cubeStore.addCube(glm::vec3(0, 0, 0), cub::CRAFTING_TABLE, TEX);
+	lightStore.addCube(glm::vec3(0, 0, 0), cub::BRICK, TEX);
 	text.init_resources();
 	//////////////////////////////////////////////////////////////////////////
 
@@ -82,8 +84,9 @@ int main()
 	// initial STATIC mats
 	glm::vec4 viewport = glm::vec4(0, 0, winWidth, winHeight);
 	glm::mat4 model = glm::mat4();
-	glm::vec3 lightPos = glm::vec3(5, 5, 5);
-	glm::vec3 lightColor = glm::vec3(1, 1, 1);
+	glm::vec3 lightPos = glm::vec3(5, 5, 6);
+	float ambientStrength = 0.5;
+	float dLight = 0.1f; float dStrength = 0.005f;
 	// control key
 	bool lControl = false;
 	// animate
@@ -208,15 +211,46 @@ int main()
 				camera.processKeyboard(cam::zoomIn, deltaTime);
 			if (sf::Keyboard::isKeyPressed(sf::Keyboard::C))
 				camera.processKeyboard(cam::zoomOut, deltaTime);
-			if (sf::Keyboard::isKeyPressed(sf::Keyboard::Space))
+			if (sf::Keyboard::isKeyPressed(sf::Keyboard::I))
+				lightPos.z -= dLight;
+			if (sf::Keyboard::isKeyPressed(sf::Keyboard::K))
+				lightPos.z += dLight;
+			if (sf::Keyboard::isKeyPressed(sf::Keyboard::J))
+				lightPos.x -= dLight;
+			if (sf::Keyboard::isKeyPressed(sf::Keyboard::L))
+				lightPos.x += dLight;
+			if (sf::Keyboard::isKeyPressed(sf::Keyboard::U))
+				lightPos.y += dLight;
+			if (sf::Keyboard::isKeyPressed(sf::Keyboard::O))
+				lightPos.y -= dLight;
+			if (sf::Keyboard::isKeyPressed(sf::Keyboard::Num9))
+				ambientStrength -= dStrength;
+			if (sf::Keyboard::isKeyPressed(sf::Keyboard::Num0))
+				ambientStrength += dStrength;
+			if (sf::Keyboard::isKeyPressed(sf::Keyboard::Space)) {
 				camera.processKeyboard(cam::reset, deltaTime);
+				lightPos = glm::vec3(5, 5, 6);
+				ambientStrength = 0.5;
+			}
 		}
 
+		cubeShader.setMat4("model", model);
+		cubeShader.setMat4("view", camera.getViewMat());
+		cubeShader.setMat4("projection", camera.getProjMat(aspect));
+		cubeShader.setVec3("lightPos", lightPos);
+		cubeShader.setVec3("viewPos", camera.getPosVec());
+		cubeShader.setFloat("ambientStrength", ambientStrength);
+
+		simpleShader.setMat4("model", glm::translate(model, lightPos));
+		simpleShader.setMat4("view", glm::mat4());
+		simpleShader.setMat4("projection", glm::mat4());
+
+
 		sf::Time animateIInterval = animateClock.getElapsedTime();
-		if (animateIInterval.asSeconds() > 0.5f && playAnimate) {
+		if (animateIInterval.asSeconds() > 0.3f && playAnimate) {
 			animateStore.clear();
 			std::string fname = "animate/" + std::to_string(count); count++; fname += ".obj";
-			count = count > 15 ? 1 : count;
+			count = count > 24 ? 1 : count;
 			animateStore.loadState(fname);
 			std::cout << "load frame " << fname << std::endl;
 			animateClock.restart();
@@ -231,12 +265,9 @@ int main()
 		if (playAnimate) animateStore.drawArrays();
 		groudStore.drawArrays();
 
-		cubeShader.setMat4("model", model);
-		cubeShader.setMat4("view", camera.getViewMat());
-		cubeShader.setMat4("projection", camera.getProjMat(aspect));
-		cubeShader.setVec3("lightPos", lightPos);
-		cubeShader.setVec3("viewPos", camera.getPosVec());
-		cubeShader.setVec3("lightColor", lightColor);
+		simpleShader.use();
+		lightStore.drawArrays();
+		cubeShader.use();
 
 		///////
 		glUseProgram(text.program);

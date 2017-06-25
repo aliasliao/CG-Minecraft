@@ -7,5 +7,5 @@ out vec4 FragColor;
 uniform sampler2DArray texes;
 
 void main() {
-	FragColor = texture(texes, TexCoord);
+	FragColor = vec4(1.0f, 1.0f, 1.0f, 1.0f);
 }

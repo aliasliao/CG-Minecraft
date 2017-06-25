@@ -8,8 +8,10 @@ out vec4 FragColor;  // default output as gl_FragColor
 
 uniform vec3 lightPos;
 uniform vec3 viewPos;
-uniform vec3 lightColor;
+uniform float ambientStrength;
 uniform sampler2DArray texes;
+
+vec3 lightColor = vec3(1.0f, 1.0f, 1.0f);
 
 void main()
 {
@@ -19,13 +21,11 @@ void main()
 		discard;
 	vec3 objectColor = vec3(objRGBA);
 
-	/*
-	if (TextureVec.z == 0.0f)  // external model
-		objectColor = vec3(1.0f, 1.0f, 1.0f);
-	*/
+	//if (TextureVec.z == 0.0f)  // external model
+		//objectColor = vec3(1.0f, 1.0f, 1.0f);
 
 	// ambient
-    float ambientStrength = 0.5;
+    //float ambientStrength = 0.5;
     vec3 ambient = ambientStrength * lightColor;
   	
     // diffuse 

@@ -68,6 +68,7 @@
     <None Include="shaders\cube.frag" />
     <None Include="shaders\simple.vert" />
     <None Include="shaders\simple.frag" />
+    <None Include="ClassDiagram.cd" />
   </ItemGroup>
   <ItemGroup>
     <Image Include="textures\blocks\custom_test.PNG">
